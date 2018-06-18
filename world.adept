@@ -1,0 +1,224 @@
+
+import 'sys/cstdio.adept'
+import 'gamedata.adept'
+
+func isPlayerOnGround(window *GLFWwindow, gamedata *GameData) bool {
+	player_box AABB; player_box = gamedata.getPlayerBox()
+	player_box.y += 2.0f
+	// Test to see if the player is on a platform
+	i usize = 0; while i != gamedata.platforms_length {
+		if gamedata.platforms[i].box.intersecting(&player_box) {
+			if(gamedata.platforms[i].type == PLATFORM_TYPE_BOUNCY){
+				gamedata.player_vspeed = -20.0f
+				gamedata.resources_ref.bounce.play()
+			} else if(gamedata.platforms[i].type == PLATFORM_TYPE_DEATH){
+				gamedata.reset()
+				gamedata.resources_ref.death.play()
+			} else if(gamedata.platforms[i].type == PLATFORM_TYPE_ASCEND){
+				if gamedata.platforms[i].moveY(gamedata, -2.0f) {
+					unless movePlayerY(gamedata, -2.0f), gamedata.reset(); gamedata.resources_ref.death.play()
+				}
+				return true
+			} else if(gamedata.platforms[i].type == PLATFORM_TYPE_DESCEND){
+				if gamedata.platforms[i].moveY(gamedata, 2.0f) {
+					unless movePlayerY(gamedata, 2.0f), gamedata.platforms[i].box.y -= 2.0f
+				}
+				return true
+			} else if(gamedata.platforms[i].type == PLATFORM_TYPE_ELEVATOR){
+				if gamedata.player_x <= gamedata.platforms[i].box.x {
+					// Ascend
+					if gamedata.platforms[i].moveY(gamedata, -2.0f) {
+						unless movePlayerY(gamedata, -2.0f), gamedata.reset(); gamedata.resources_ref.death.play()
+					}
+				} else {
+					// Descend
+					if gamedata.platforms[i].moveY(gamedata, 2.0f) {
+						unless movePlayerY(gamedata, 2.0f), gamedata.platforms[i].box.y -= 2.0f
+					}
+				}
+				return true
+			} else return true
+		}
+		i += 1
+	}
+	// Test to see if the player is on a box
+	i = 0; while i != gamedata.boxes_length {
+		box *Box = &gamedata.boxes[i]
+		if box.gone == false and box.box.intersecting(&player_box), return true
+		i += 1
+	}
+	// Test to see if the player is on a jumper
+	i = 0; while i != gamedata.jumpers_length {
+		jumper *Jumper = &gamedata.jumpers[i]
+		if jumper.gone == false and jumper.box.intersecting(&player_box) {
+			if jumper.jumping, gamedata.reset(); gamedata.resources_ref.death.play()
+			return true
+		}
+		i += 1
+	}
+	return false
+}
+
+func onGround(this *Box, gamedata *GameData) bool {
+	check AABB; check.set(&this.box); check.y += 1.0
+	// Test to see the box is on a platform
+	i usize = 0; while i != gamedata.platforms_length {
+		if gamedata.platforms[i].box.intersecting(&check) {
+			if(gamedata.platforms[i].type == PLATFORM_TYPE_BOUNCY){
+				this.vspeed = -5.0f
+				gamedata.resources_ref.bounce.play()
+				return false
+			} else if(gamedata.platforms[i].type == PLATFORM_TYPE_DESTROY){
+				this.gone = true
+				gamedata.resources_ref.destroy.play()
+			} else {
+				if gamedata.platforms[i].type == PLATFORM_TYPE_HIDDEN and gamedata.platforms[i].triggered == false {
+					gamedata.platforms[i].triggered = true; gamedata.resources_ref.discover.play()
+				}
+				return true
+			}
+		}
+		i += 1
+	}
+	// Test to see if the box is on another box
+	i = 0; while i != gamedata.boxes_length {
+		box *Box = &gamedata.boxes[i]
+		if box.gone == false and box.box.intersecting(&check) and this.box.equals(&box.box) == false, return true
+		i += 1
+	}
+	// Test to see if the box is on a jumper
+	i = 0; while i != gamedata.jumpers_length {
+		jumper *Jumper = &gamedata.jumpers[i]
+		if jumper.gone == false and jumper.box.intersecting(&check) and this.box.equals(&jumper.box) == false, return true
+		i += 1
+	}
+	return false
+}
+
+func isColliding(this *Box, gamedata *GameData) bool {
+	// Test to see if the box is colliding with a platform
+	i usize = 0; while i != gamedata.platforms_length {
+		if gamedata.platforms[i].box.intersecting(&this.box), return true
+		i += 1
+	}
+	// Test to see if the box is colliding with another block
+	i = 0; while i != gamedata.boxes_length {
+		box *Box = &gamedata.boxes[i]
+		if box.gone == false and box.box.intersecting(&this.box) and this.box.equals(&box.box) == false, return true
+		i += 1
+	}
+	// Test to see if the box is colliding with a jumper
+	i = 0; while i != gamedata.jumpers_length {
+		jumper *Jumper = &gamedata.jumpers[i]
+		if jumper.gone == false and jumper.box.intersecting(&this.box) and this.box.equals(&jumper.box) == false, return true
+		i += 1
+	}
+	return false
+}
+
+func isPlayerColliding(gamedata *GameData) bool {
+	// Test to see if the player is colliding with a platform
+	i usize = 0; while i != gamedata.platforms_length {
+		if gamedata.platforms[i].box.intersecting(gamedata.player_x + 48.0f, gamedata.player_y + 20.0f, 32.0f, 108.0f), return true
+		i += 1
+	}
+	// Test to see if the player is colliding with a box
+	i = 0; while i != gamedata.boxes_length {
+		box *Box = &gamedata.boxes[i]
+		if box.gone == false and box.box.intersecting(gamedata.player_x + 48.0f, gamedata.player_y + 20.0f, 32.0f, 108.0f), return true
+		i += 1
+	}
+	// Test to see if the player is colliding with a jumper
+	i = 0; while i != gamedata.jumpers_length {
+		jumper *Jumper = &gamedata.jumpers[i]
+		if jumper.gone == false and jumper.box.intersecting(gamedata.player_x + 48.0f, gamedata.player_y + 20.0f, 32.0f, 108.0f), return true
+		i += 1
+	}
+	return false
+}
+
+func playerOnTopOf(this *Box, gamedata *GameData) bool {
+	return this.box.intersecting(gamedata.player_x + 48.0f, gamedata.player_y + 20.0f + 2.0f, 32.0f, 108.0f)
+}
+
+func playerJumpCollide(gamedata *GameData, by_y float) bool {
+	// Returns whether snapping occured
+	player_box AABB = gamedata.getPlayerBox()
+
+	i usize = 0; while i != gamedata.platforms_length {
+		platform *Platform = &gamedata.platforms[i]
+		if platform.box.intersecting(&player_box) {
+			if platform.type == PLATFORM_TYPE_HIDDEN and platform.triggered == false {
+				platform.triggered = true; gamedata.resources_ref.discover.play()
+			}
+			if gamedata.player_y - by_y + 64.0f > platform.box.y {
+				gamedata.player_y -= by_y; gamedata.player_vspeed = 0.0f
+			} else {
+				gamedata.player_y = platform.box.y - 128.0f; gamedata.player_vspeed = 0.0f
+				return true
+			}
+		}
+		i += 1
+	}
+
+	i = 0; while i != gamedata.boxes_length {
+		box *Box = &gamedata.boxes[i]
+		if box.gone == false and box.box.intersecting(&player_box) {
+			if gamedata.player_y - gamedata.player_vspeed + 64.0f > box.box.y {
+				gamedata.player_y -= by_y; gamedata.player_vspeed = 0.0f
+			} else {
+				gamedata.player_y = box.box.y - 128.0f; gamedata.player_vspeed = 0.0f
+				return true
+			}
+		}
+		i += 1
+	}
+
+	i = 0; while i != gamedata.jumpers_length {
+		jumper *Jumper = &gamedata.jumpers[i]
+		if jumper.gone == false and jumper.box.intersecting(&player_box) {
+			if gamedata.player_y - gamedata.player_vspeed + 64.0f > jumper.box.y {
+				gamedata.player_y -= by_y; gamedata.player_vspeed = 0.0f
+			} else {
+				gamedata.player_y = jumper.box.y - 128.0f; gamedata.player_vspeed = 0.0f
+				return true
+			}
+		}
+		i += 1
+	}
+
+	gamedata.player_vspeed += 0.9f
+	return false
+}
+
+func playerHandlePunch(gamedata *GameData, resources *Resources) void {
+	player_hit_offset float
+
+	if gamedata.player_anim == gamedata.player_punch_r_anim, player_hit_offset = 32.0f
+	else player_hit_offset = -32.0f
+
+	i usize = 0; while i != gamedata.boxes_length {
+		box *Box = &gamedata.boxes[i]
+		if box.gone == false and box.box.intersecting(gamedata.player_x + 48.0f + player_hit_offset, gamedata.player_y + 20.0f, 32.0f, 108.0f) {
+			if player_hit_offset > 0.0, box.hspeed = 5.0
+			else box.hspeed = -5.0
+		}
+		i += 1
+	}
+
+	i = 0; while i != gamedata.jumpers_length {
+		jumper *Jumper = &gamedata.jumpers[i]
+		if jumper.gone == false and jumper.box.intersecting(gamedata.player_x + 48.0f + player_hit_offset, gamedata.player_y + 20.0f, 32.0f, 108.0f) {
+			if player_hit_offset > 0.0, jumper.hspeed = 5.0
+			else jumper.hspeed = -5.0
+			jumper.jumping = false
+		}
+		i += 1
+	}
+}
+
+func distance(x1 float, y1 float, x2 float, y2 float) float {
+	xdiff float = x2 - x1
+	ydiff float = y2 - y1
+	return cast float sqrt(cast double (xdiff * xdiff + ydiff * ydiff))
+}

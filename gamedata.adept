@@ -1,0 +1,243 @@
+
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+import 'sys/cstring.adept'
+import 'adept/math/matrix4f.adept'
+
+import 'map.adept'
+import 'aabb.adept'
+import 'resources.adept'
+import 'animation.adept'
+
+SCENE_START_MENU == 0
+SCENE_GAME       == 1
+
+struct GameData (
+	width float, height float,
+	win_width int, win_height int,
+	cam_x float, cam_y float, snap_cam bool,
+	resources_ref *Resources, scene uint,
+
+	projection Matrix4f, transformation Matrix4f,
+	projection_location int, transformation_location int,
+	player_x float, player_y float, player_vspeed float,
+	player_anim *Animation,
+
+	platforms *Platform, platforms_length usize,
+	boxes *Box, boxes_length usize,
+	current_level usize, levels *Level, levels_length usize,
+	portal Portal, jumpers *Jumper, jumpers_length usize,
+	time_offset double, looking bool, look_mode_lock bool,
+
+	theme uint,
+	player_idle_r_anim *Animation, player_idle_l_anim *Animation,
+	player_walk_r_anim *Animation, player_walk_l_anim *Animation,
+	player_punch_r_anim *Animation, player_punch_l_anim *Animation,
+	box_texture GLuint, portal_texture GLuint, jumper_texture GLuint,
+
+	menu_selection uint, max_menu_selection uint,
+	menu_up_lock bool, menu_down_lock bool, menu_space_lock bool
+)
+
+struct Level (theme uint, start_x float, start_y float,
+	platforms *Platform, platforms_length usize,
+	boxes *Box, boxes_length usize, portal Portal, jumpers *Jumper,
+	jumpers_length usize)
+
+PLATFORM_TYPE_PLAIN    == 1
+PLATFORM_TYPE_BOUNCY   == 2
+PLATFORM_TYPE_DEATH    == 3
+PLATFORM_TYPE_HIDDEN   == 4
+PLATFORM_TYPE_DESTROY  == 5
+PLATFORM_TYPE_ASCEND   == 6
+PLATFORM_TYPE_DESCEND  == 7
+PLATFORM_TYPE_ELEVATOR == 8
+
+struct Platform (box AABB, texture GLuint, type uint, triggered bool)
+struct Box(box AABB, texture *GLuint, hspeed float, vspeed float, gone bool)
+struct Portal (x float, y float, activated bool)
+struct Jumper (box AABB, texture *GLuint, hspeed float, vspeed float, gone bool,
+	jumping bool, end_jump_time double, jump_direction float) // Jumpers can be passed as boxes
+
+THEME_PURPLE == 0
+THEME_GREEN == 1
+
+func load(this *GameData, resources *Resources) void {
+	this.cam_x = 0.0f
+	this.cam_y = 0.0f
+	this.resources_ref = resources
+	this.scene = SCENE_START_MENU
+
+	this.projection.create()
+	this.transformation.create()
+	this.projection_location = resources.shader.getUniformLocation('projection')
+	this.transformation_location = resources.shader.getUniformLocation('transformation')
+
+	this.player_x = 0.0f
+	this.player_y = 0.0f
+	this.player_vspeed = 0.0f
+	this.player_anim = &resources.p_player_idle_r_animation
+	this.player_anim.reset()
+
+	this.levels = null
+	this.levels_length = 0
+	this.platforms = null
+	this.platforms_length = 0
+	this.boxes = null
+	this.boxes_length = 0
+	this.jumpers = null
+	this.jumpers_length = 0
+	this.looking = false
+	this.look_mode_lock = false
+
+	loadMaps(this)
+	this.sceneStartMenu()
+}
+
+func sceneStartMenu(this *GameData) void {
+	this.scene = SCENE_START_MENU
+	this.menu_selection = 0
+	this.max_menu_selection = 1
+	this.menu_up_lock = true
+	this.menu_down_lock = true
+	this.menu_space_lock = true
+}
+
+func sceneGame(this *GameData) void {
+	this.scene = SCENE_GAME
+	this.loadLevel(1)
+}
+
+func loadTheme(this *GameData, theme uint) void {
+	// Loads a theme into gamedata resources references
+	this.theme = theme
+
+	if theme == THEME_PURPLE {
+		this.player_idle_r_anim  = &this.resources_ref.p_player_idle_r_animation
+		this.player_idle_l_anim  = &this.resources_ref.p_player_idle_l_animation
+		this.player_walk_r_anim  = &this.resources_ref.p_player_walk_r_animation
+		this.player_walk_l_anim  = &this.resources_ref.p_player_walk_l_animation
+		this.player_punch_r_anim = &this.resources_ref.p_player_punch_r_animation
+		this.player_punch_l_anim = &this.resources_ref.p_player_punch_l_animation
+		this.box_texture         = this.resources_ref.p_box
+		this.portal_texture      = this.resources_ref.p_portal
+		this.jumper_texture      = this.resources_ref.g_jumper
+	} else if theme == THEME_GREEN {
+		this.player_idle_r_anim  = &this.resources_ref.g_player_idle_r_animation
+		this.player_idle_l_anim  = &this.resources_ref.g_player_idle_l_animation
+		this.player_walk_r_anim  = &this.resources_ref.g_player_walk_r_animation
+		this.player_walk_l_anim  = &this.resources_ref.g_player_walk_l_animation
+		this.player_punch_r_anim = &this.resources_ref.g_player_punch_r_animation
+		this.player_punch_l_anim = &this.resources_ref.g_player_punch_l_animation
+		this.box_texture         = this.resources_ref.g_box
+		this.portal_texture      = this.resources_ref.g_portal
+		this.jumper_texture      = this.resources_ref.g_jumper
+	} else {
+		puts('Tried to load unknown theme')
+	}
+}
+
+func loadLevel(this *GameData, level_index usize) void {
+	if level_index >= this.levels_length, return
+
+	level *Level = &this.levels[level_index]
+	this.current_level = level_index
+	this.loadTheme(level.theme)
+	this.player_x = level.start_x
+	this.player_y = level.start_y
+	this.cam_x = 0.0f - level.start_x - 64.0f + this.width / 2
+	this.cam_y = 0.0f - level.start_y - 64.0f + this.height / 2
+	this.snap_cam = true
+	this.player_vspeed = 0.0f
+	this.player_anim = this.player_idle_r_anim
+
+	free(this.platforms)
+	free(this.boxes)
+	free(this.jumpers)
+
+	this.platforms_length = level.platforms_length
+	this.platforms = malloc(level.platforms_length * sizeof Platform)
+	memcpy(this.platforms, level.platforms, level.platforms_length * sizeof Platform)
+
+	this.boxes_length = level.boxes_length
+	this.boxes = malloc(level.boxes_length * sizeof Box)
+	memcpy(this.boxes, level.boxes, level.boxes_length * sizeof Box)
+
+	this.jumpers_length = level.jumpers_length
+	this.jumpers = malloc(level.jumpers_length * sizeof Jumper)
+	memcpy(this.jumpers, level.jumpers, level.jumpers_length * sizeof Jumper)
+
+	this.portal = level.portal
+	this.time_offset = glfwGetTime()
+	this.look_mode_lock = true
+}
+
+func nextLevel(this *GameData) void {
+	if this.current_level + 1 == this.levels_length, this.loadLevel(0)
+	else this.loadLevel(this.current_level + 1)
+}
+
+func reset(this *GameData) void {
+	this.loadLevel(this.current_level)
+	this.resources_ref.death.play()
+}
+
+func getPlayerBox(this *GameData) AABB {
+	box AABB; box.set(this.player_x + 48.0f, this.player_y + 20.0f, 32.0f, 108.0f)
+	return box
+}
+
+func getTime(this *GameData) double {
+	return glfwGetTime() - this.time_offset
+}
+
+func playerDistance(this *GameData, point_x float, point_y float) float {
+	return distance(this.player_x + 64.0f, this.player_y + 64.0f, point_x, point_y)
+}
+
+func destroy(this *GameData) void {
+	this.projection.destroy()
+	this.transformation.destroy()
+	i usize = 0; while i != this.levels_length {
+		this.levels[i].destroy()
+		i += 1
+	}
+	free(this.levels)
+}
+
+func destroy(this *Level) void {
+	free(this.platforms)
+	free(this.boxes)
+}
+
+func create(this *Platform, x float, y float, w float, h float, texture GLuint, type uint) void {
+	this.box.set(x, y, w, h)
+	this.texture = texture
+	this.type = type
+	this.triggered = false
+}
+
+func create(this *Platform, box AABB, texture GLuint) void {
+	this.box = box
+	this.texture = texture
+	this.triggered = false
+}
+
+func create(this *Box, x float, y float, texture *GLuint) void {
+	this.box.set(x, y, 64.0f, 64.0f)
+	this.texture = texture
+	this.hspeed = 0.0f
+	this.vspeed = 0.0f
+	this.gone = false
+}
+
+func create(this *Jumper, x float, y float, texture *GLuint) void {
+	this.box.set(x, y, 64.0f, 64.0f)
+	this.texture = texture
+	this.hspeed = 0.0f
+	this.vspeed = 0.0f
+	this.gone = false
+	this.jumping = false
+	this.end_jump_time = 0.0
+	this.jump_direction = 1.0f
+}

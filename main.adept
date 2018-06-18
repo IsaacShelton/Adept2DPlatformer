@@ -1,0 +1,85 @@
+
+import 'glfw/glfw.adept'
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+
+import 'menu.adept'
+import 'model.adept'
+import 'shader.adept'
+import 'gamedata.adept'
+import 'resources.adept'
+import 'input.adept'
+import 'render.adept'
+
+func main() int {
+    unless glfwInit(), puts('Failed to init glfw'); return 1
+
+    monitor *GLFWmonitor = glfwGetPrimaryMonitor()
+    video_mode *GLFWvidmode = glfwGetVideoMode(monitor)
+    window *GLFWwindow = glfwCreateWindow(video_mode.width, video_mode.height, 'Purple Void', monitor, null)
+
+    if window == null {
+        puts('Failed to create window')
+        glfwTerminate()
+        return 1
+    }
+    
+    // Setup opengl
+    glfwMakeContextCurrent(window)
+    glfwSwapInterval(1)
+    glEnable(GL_DEPTH_TEST)
+    glDepthFunc(GL_LESS)
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN)
+    openglInit()
+    soundInit()
+
+    resources Resources; gamedata GameData; display_ratio float
+
+    resources.load(); gamedata.load(&resources)
+    resources.music.play()
+
+    until glfwWindowShouldClose(window) {
+        if gamedata.scene == SCENE_START_MENU {
+            glClearColor(0.8f, 0.0f, 0.8f, 0.0f)
+            glClear(GL_COLOR_BUFFER_BIT)
+            glClear(GL_DEPTH_BUFFER_BIT)
+            glfwGetFramebufferSize(window, &gamedata.win_width, &gamedata.win_height)
+
+            glViewport(0, 0, gamedata.win_width, gamedata.win_height)
+            display_ratio = cast float gamedata.win_width / cast float gamedata.win_height
+            gamedata.width = 800.0f * display_ratio
+            gamedata.height = 800.0f
+            gamedata.projection.ortho(0.0f, gamedata.width, gamedata.height, 0.0f, 1.0f, -1.0f)
+
+            menuInput(window, &resources, &gamedata)
+            menuRender(&resources, &gamedata)
+        } else if gamedata.scene == SCENE_GAME {
+            if gamedata.theme == THEME_PURPLE, glClearColor(0.8f, 0.0f, 0.8f, 0.0f)
+            else if gamedata.theme == THEME_GREEN, glClearColor(0.196078431, 0.643137255, 0.196078431, 0.0f)
+            glClear(GL_COLOR_BUFFER_BIT)
+            glClear(GL_DEPTH_BUFFER_BIT)
+            glfwGetFramebufferSize(window, &gamedata.win_width, &gamedata.win_height)
+
+            glViewport(0, 0, gamedata.win_width, gamedata.win_height)
+            display_ratio = cast float gamedata.win_width / cast float gamedata.win_height
+            gamedata.width = 800.0f * display_ratio
+            gamedata.height = 800.0f
+            gamedata.projection.ortho(0.0f, gamedata.width, gamedata.height, 0.0f, 1.0f, -1.0f)
+
+            input(window, &resources, &gamedata)
+            render(&resources, &gamedata)
+        }
+
+        glfwSwapBuffers(window)
+        glfwPollEvents()
+    }
+
+    gamedata.destroy()
+    resources.destroy()
+
+    glfwDestroyWindow(window)
+    glfwTerminate()
+    return 0
+}

@@ -1,0 +1,70 @@
+
+import 'glfw/glfw.adept'
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+
+import 'gamedata.adept'
+import 'resources.adept'
+
+func menuInput(window *GLFWwindow, resources *Resources, gamedata *GameData) void {
+    if glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS {
+        unless gamedata.menu_up_lock {
+            // Move up one
+            if gamedata.menu_selection == 0, gamedata.menu_selection = gamedata.max_menu_selection
+            else gamedata.menu_selection -= 1
+            gamedata.menu_up_lock = true
+        }
+    } else gamedata.menu_up_lock = false
+
+    if glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS {
+        unless gamedata.menu_down_lock {
+            // Move down one
+            if gamedata.menu_selection == gamedata.max_menu_selection, gamedata.menu_selection = 0
+            else gamedata.menu_selection += 1
+            gamedata.menu_down_lock = true
+        }
+    } else gamedata.menu_down_lock = false
+
+    if glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS {
+        unless gamedata.menu_space_lock {
+            // Select item
+            selectMenuItem(window, gamedata)
+            gamedata.menu_space_lock = true
+        }
+    } else gamedata.menu_space_lock = false
+}
+
+func selectMenuItem(window *GLFWwindow, gamedata *GameData) void {
+    if gamedata.menu_selection == 0, gamedata.sceneGame()
+    else glfwSetWindowShouldClose(window, true)
+}
+
+func menuRender(resources *Resources, gamedata *GameData) void {
+    resources.shader.use()
+    resources.shader.uploadMatrix4f(gamedata.projection_location, gamedata.projection)
+
+    gamedata.transformation.identity()
+    gamedata.transformation.translate(gamedata.width / 2.0f - 128.0f, gamedata.height / 2 - 64.0f, 0.0f)
+    resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
+    bindTexture(resources.start)
+    resources.model_256x64.draw()
+
+    gamedata.transformation.identity()
+    gamedata.transformation.translate(gamedata.width / 2.0f - 128.0f, gamedata.height / 2 + 32.0f, 0.0f)
+    resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
+    bindTexture(resources.quit)
+    resources.model_256x64.draw()
+
+    gamedata.transformation.identity()
+    gamedata.transformation.translate(gamedata.width / 2.0f - 128.0f, gamedata.height / 2 - 64.0f + 96.0f * cast float gamedata.menu_selection, 0.0f)
+    resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
+    bindTexture(resources.selection)
+    resources.model_256x64.draw()
+
+    gamedata.transformation.identity()
+    gamedata.transformation.translate(0.0f, gamedata.height - 128.0f, 0.0f)
+    gamedata.transformation.scale(2.0f, 2.0f, 0.0f)
+    resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
+    bindTexture(resources.credits_text)
+    resources.model_256x64.draw()
+}

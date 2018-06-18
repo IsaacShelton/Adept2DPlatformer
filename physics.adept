@@ -1,0 +1,250 @@
+
+import 'gamedata.adept'
+import 'world.adept'
+
+func movePlayerX(gamedata *GameData, by_x float) bool {
+    // Returns whether successful
+    gamedata.player_x += by_x
+    if isPlayerColliding(gamedata), gamedata.player_x -= by_x; return false
+    return true
+}
+
+func movePlayerYJumping(gamedata *GameData, by_y float) bool {
+    // Returns whether successful
+    gamedata.player_y += by_y
+    return playerJumpCollide(gamedata, by_y)
+}
+
+func movePlayerY(gamedata *GameData, by_y float) bool {
+    // Returns whether successful
+    gamedata.player_y += by_y
+    if isPlayerColliding(gamedata), gamedata.player_y -= by_y; return false
+    return true
+}
+
+func moveX(this *Box, gamedata *GameData, by_x float) bool {
+    // Returns whether successful
+    this.box.x += by_x
+
+    i usize = 0; while i != gamedata.platforms_length {
+        if gamedata.platforms[i].box.intersecting(&this.box), this.box.x -= by_x; return false
+        i += 1
+    }
+
+    i = 0; while i != gamedata.boxes_length {
+        other *Box = &gamedata.boxes[i]
+        if other.gone == false and this.box.intersecting(&other.box) and this.box.equals(&other.box) == false {
+            if (this.hspeed > 0.0f and other.box.x > this.box.x || this.hspeed < 0.0f and other.box.x < this.box.x) {
+                other.hspeed = this.hspeed
+                unless other.moveX(gamedata, by_x) {
+                    this.hspeed = 0.0f
+                    other.hspeed = 0.0f
+                    this.box.x -= by_x
+                    return false
+                }
+            } else {
+                this.hspeed = 0.0f
+                this.box.x -= by_x
+                return false
+            }
+        }
+        i += 1
+    }
+
+
+    i = 0; while i != gamedata.jumpers_length {
+        jumper *Jumper = &gamedata.jumpers[i]
+        if jumper.gone == false and this.box.intersecting(&jumper.box) and this.box.equals(&jumper.box) == false {
+            if (this.hspeed > 0.0f and jumper.box.x > this.box.x || this.hspeed < 0.0f and jumper.box.x < this.box.x) {
+                jumper.hspeed = this.hspeed
+                unless cast *Box(jumper).moveX(gamedata, by_x) {
+                    this.hspeed = 0.0f
+                    jumper.hspeed = 0.0f
+                    this.box.x -= by_x
+                    return false
+                }
+            } else {
+                this.hspeed = 0.0f
+                this.box.x -= by_x
+                return false
+            }
+        }
+        i += 1
+    }
+
+    player_box AABB = gamedata.getPlayerBox()
+    if this.box.intersecting(&player_box) {
+        unless movePlayerX(gamedata, by_x) {
+            this.hspeed = 0.0f
+            return false
+        }
+    }
+
+    return true
+}
+
+func moveY(this *Box, gamedata *GameData, by_y float) bool {
+    // Returns whether successful
+    this.box.y += by_y
+
+    if this.box.y > 800.0f, this.gone = true; return true
+
+    i usize = 0; while i != gamedata.platforms_length {
+        if gamedata.platforms[i].box.intersecting(&this.box), this.box.y -= by_y; return false
+        i += 1
+    }
+
+    i = 0; while i != gamedata.boxes_length {
+        other *Box = &gamedata.boxes[i]
+        if other.gone == false and this.box.intersecting(&other.box) and this.box.equals(&other.box) == false {
+            if (this.vspeed > 0.0f and other.box.y > this.box.y || this.vspeed < 0.0f and other.box.y < this.box.y) {
+                other.vspeed = this.vspeed
+                unless other.moveY(gamedata, by_y) {
+                    this.vspeed = 0.0f
+                    other.vspeed = 0.0f
+                    this.box.y -= by_y
+                    return false
+                }
+            } else {
+                this.vspeed = 0.0f
+                this.box.y -= by_y
+                return false
+            }
+        }
+        i += 1
+    }
+
+    i = 0; while i != gamedata.jumpers_length {
+        jumper *Jumper = &gamedata.jumpers[i]
+        if jumper.gone == false and this.box.intersecting(&jumper.box) and this.box.equals(&jumper.box) == false {
+            if (this.vspeed > 0.0f and jumper.box.y > this.box.y || this.vspeed < 0.0f and jumper.box.y < this.box.y) {
+                jumper.vspeed = this.vspeed
+                unless cast *Box(jumper).moveY(gamedata, by_y) {
+                    this.vspeed = 0.0f
+                    jumper.vspeed = 0.0f
+                    this.box.y -= by_y
+                    return false
+                }
+            } else {
+                this.vspeed = 0.0f
+                this.box.y -= by_y
+                return false
+            }
+        }
+        i += 1
+    }
+
+    if this.playerOnTopOf(gamedata) {
+        prev_y float = gamedata.player_y; gamedata.player_y = this.box.y - 128.0
+        if prev_y + 96.0f > this.box.y and gamedata.player_y + 96.0f < this.box.y {
+            gamedata.player_y = prev_y
+            unless movePlayerY(gamedata, by_y), gamedata.reset(); gamedata.resources_ref.death.play()
+        }
+    }
+
+    return true
+}
+
+func moveY(this *Platform, gamedata *GameData, by_y float) bool {
+    // Returns whether successful
+    this.box.y += by_y
+
+    i usize = 0; while i != gamedata.platforms_length {
+        if this != &gamedata.platforms[i] and gamedata.platforms[i].box.intersecting(&this.box), this.box.y -= by_y; return false
+        i += 1
+    }
+
+    i = 0; while i != gamedata.boxes_length {
+        other *Box = &gamedata.boxes[i]
+        if other.gone == false and this.box.intersecting(&other.box) {
+            unless other.moveY(gamedata, by_y) {
+                this.box.y -= by_y
+                return false
+            }
+        }
+        i += 1
+    }
+
+    i = 0; while i != gamedata.jumpers_length {
+        jumper *Jumper = &gamedata.jumpers[i]
+        if jumper.gone == false and this.box.intersecting(&jumper.box) {
+            unless cast *Box(jumper).moveY(gamedata, by_y) {
+                this.box.y -= by_y
+                return false
+            }
+        }
+        i += 1
+    }
+
+    return true
+}
+
+func simulateBoxes(gamedata *GameData) void {
+	i usize = 0; while i != gamedata.boxes_length {
+		box *Box = &gamedata.boxes[i]
+        unless box.gone {
+            unless box.moveX(gamedata, box.hspeed), box.hspeed = 0.0f
+            if box.hspeed > 0.0, box.hspeed -= 0.2; if box.hspeed <  0.2, box.hspeed = 0.0
+            if box.hspeed < 0.0, box.hspeed += 0.2; if box.hspeed > -0.2, box.hspeed = 0.0
+        }
+        i += 1
+	}
+
+	i = 0; while i != gamedata.boxes_length {
+		box = &gamedata.boxes[i]
+        unless box.gone {
+            unless box.onGround(gamedata) {
+                box.vspeed += 0.1; if box.vspeed >= 1.0, box.vspeed = 1.0
+            } else box.vspeed = 0.0
+            unless box.moveY(gamedata, box.vspeed), box.vspeed = 0.0f
+        }
+		i += 1
+	}
+}
+
+func simulateJumpers(gamedata *GameData) void {
+	i usize = 0; while i != gamedata.jumpers_length {
+		jumper *Jumper = &gamedata.jumpers[i]
+        unless jumper.gone {
+            if jumper.jumping {
+                hspeed_prev float = jumper.hspeed
+                jumper.hspeed += 4.0f * jumper.jump_direction
+                unless cast *Box (jumper).moveX(gamedata, jumper.hspeed), jumper.hspeed = 0.0f; jumper.jumping = false
+                jumper.hspeed -= 4.0f * jumper.jump_direction
+            } else {
+                unless cast *Box (jumper).moveX(gamedata, jumper.hspeed), jumper.hspeed = 0.0f
+            }
+
+            player_box AABB = gamedata.getPlayerBox()
+            if jumper.jumping and jumper.box.intersecting(&player_box), gamedata.reset(); gamedata.resources_ref.death.play()
+
+            if jumper.hspeed > 0.0, jumper.hspeed -= 0.2; if jumper.hspeed <  0.2, jumper.hspeed = 0.0; jumper.jumping = false
+            if jumper.hspeed < 0.0, jumper.hspeed += 0.2; if jumper.hspeed > -0.2, jumper.hspeed = 0.0; jumper.jumping = false
+        }
+        i += 1
+	}
+
+	i = 0; while i != gamedata.jumpers_length {
+		jumper = &gamedata.jumpers[i]
+        unless jumper.gone {
+            unless cast *Box (jumper).onGround(gamedata) {
+                if jumper.jumping, jumper.vspeed += 0.6
+                else jumper.vspeed += 0.1; if jumper.vspeed >= 1.0, jumper.vspeed = 1.0
+            } else {
+                if jumper.jumping {
+                    if gamedata.getTime() >= jumper.end_jump_time, jumper.jumping = false
+                    else jumper.vspeed = -6.0f
+                } else if cast int gamedata.getTime() % 5 == cast int i % 5 and
+                        gamedata.playerDistance(jumper.box.x + 32.0f, jumper.box.y + 32.0f) <= 960.0f {
+                    jumper.vspeed = -6.0f
+                    jumper.jumping = true
+                    jumper.end_jump_time = gamedata.getTime() + 1.0
+                    jumper.jump_direction = cast float (jumper.box.x + 32.0f <= gamedata.player_x + 64.0f) * 2.0f - 1.0f
+                    gamedata.resources_ref.jumper.play()
+                } else jumper.vspeed = 0.2f
+            }
+            unless cast *Box (jumper).moveY(gamedata, jumper.vspeed), jumper.vspeed = 0.0f
+        }
+		i += 1
+	}
+}

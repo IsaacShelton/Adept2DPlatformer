@@ -1,0 +1,35 @@
+
+struct Animation (frames *uint, length usize,
+    current_frame usize, ticker usize, interval usize)
+
+func create(this *Animation, data *uint, length usize, animation_interval usize) void {
+    this.frames = data
+    this.length = length
+    this.current_frame = 0
+    this.ticker = 0
+    this.interval = animation_interval
+}
+
+func reset(this *Animation) void {
+    this.current_frame = 0ui
+    this.ticker = 0ui
+}
+
+func now(this *Animation) uint {
+    return this.frames[this.current_frame]
+}
+
+func nextFrame(this *Animation) void {
+    if this.current_frame + 1 == this.length, this.current_frame = 0
+    else this.current_frame = this.current_frame + 1
+}
+
+func update(this *Animation) void {
+    this.ticker += 1
+    if this.ticker > this.interval, this.ticker = 0; nextFrame(this)
+}
+
+func free(this *Animation) void {
+    // Only call if frames data was dynamically allocated
+    free(this.frames)
+}

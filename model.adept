@@ -1,0 +1,53 @@
+
+import 'glfw/glfw.adept'
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+import 'adept/filetypes/bitmap.adept'
+
+struct Model (vao GLuint, vertices_vbo GLuint, uvs_vbo GLuint,
+	texture_id GLuint, triangle_count int)
+
+func create(this *Model, points *float, points_length usize,
+		uvs *float, uvs_length usize) void {
+	this.triangle_count = cast int(points_length / 3ui)
+
+	this.vertices_vbo = 0ui
+	glGenBuffers(1, &this.vertices_vbo)
+	glBindBuffer(GL_ARRAY_BUFFER, this.vertices_vbo)
+	glBufferData(GL_ARRAY_BUFFER, cast int(sizeof float * points_length), points, GL_STATIC_DRAW)
+
+	this.uvs_vbo = 0ui
+	glGenBuffers(1, &this.uvs_vbo)
+	glBindBuffer(GL_ARRAY_BUFFER, this.uvs_vbo)
+	glBufferData(GL_ARRAY_BUFFER, cast int(sizeof float * uvs_length), uvs, GL_STATIC_DRAW)
+
+	glGenVertexArrays(1, &this.vao)
+	glBindVertexArray(this.vao)
+
+	glEnableVertexAttribArray(0ui)
+	glBindBuffer(GL_ARRAY_BUFFER, this.vertices_vbo)
+	glVertexAttribPointer(0ui, 3, GL_FLOAT, GL_FALSE, 0, null)
+
+	glEnableVertexAttribArray(1ui)
+	glBindBuffer(GL_ARRAY_BUFFER, this.uvs_vbo)
+	glVertexAttribPointer(1ui, 2, GL_FLOAT, GL_FALSE, 0, null)
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0ui)
+	glBindVertexArray(0ui)
+}
+
+func draw(this *Model) void {
+	glBindVertexArray(this.vao)
+	glDrawArrays(GL_TRIANGLES, 0, this.triangle_count)
+}
+
+func destroy(this *Model) void {
+	glDeleteBuffers(1, &this.vertices_vbo)
+	glDeleteBuffers(1, &this.uvs_vbo)
+	glDeleteVertexArrays(1, &this.vao)
+}
+
+func bindTexture(texture_id GLuint) void {
+	glActiveTexture(GL_TEXTURE0)
+	glBindTexture(GL_TEXTURE_2D, texture_id)
+}

@@ -1,0 +1,32 @@
+
+struct AABB (x float, y float, w float, h float)
+
+func set(this *AABB, x float, y float, w float, h float) void {
+	this.x = x; this.y = y
+	this.w = w; this.h = h
+}
+
+func set(this *AABB, other *AABB) void {
+	this.x = other.x; this.y = other.y
+	this.w = other.w; this.h = other.h
+}
+
+func intersecting(this *AABB, other *AABB) bool {
+	return this.x < other.x + other.w && this.x + this.w > other.x && this.y < other.y + other.h && this.h + this.y > other.y
+}
+
+func intersecting(this *AABB, x float, y float, w float, h float) bool {
+	return this.x < x + w && this.x + this.w > x && this.y < y + h && this.h + this.y > y
+}
+
+func intersecting(this *AABB, x float, y float) bool {
+	return x > this.x && x < this.x + this.w && y > this.y && y < this.y + this.w
+}
+
+func equals(this *AABB, other *AABB) bool {
+	unless this.x == other.x, return false
+	unless this.y == other.y, return false
+	unless this.w == other.w, return false
+	unless this.h == other.h, return false
+	return true
+}

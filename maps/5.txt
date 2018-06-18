@@ -1,0 +1,16 @@
+theme purple
+player @ 0 0
+platform @ 0 160
+platform @ 128 160
+box @ 160 96
+box @ 160 32
+bouncy_platform @ 256 160
+hidden_platform @ 608 -384
+hidden_platform @ 256 -544
+hidden_platform @ 0 -544
+hidden_platform @ -192 -544
+bouncy_platform @ 384 -544
+platform @ 384 -256
+portal @ -480 -448
+platform @ -512 -320
+platform @ -384 -320

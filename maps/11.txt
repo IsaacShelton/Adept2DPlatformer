@@ -1,0 +1,17 @@
+theme green
+player @ 0 0
+platform @ 0 160
+destroy_platform @ 256 160
+platform @ 128 160
+destroy_platform @ 384 192
+destroy_platform @ 512 224
+platform @ 640 224
+portal @ 704 96
+box @ 128 96
+box @ 192 96
+box @ 128 32
+box @ 192 32
+box @ 128 -32
+box @ 192 -32
+box @ 192 -96
+box @ 128 -96

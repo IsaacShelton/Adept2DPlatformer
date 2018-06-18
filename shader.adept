@@ -1,0 +1,64 @@
+
+import 'sys/cstdio.adept'
+import 'adept/math/matrix4f.adept'
+import 'glfw/glfw.adept'
+
+struct Shader (program GLuint, vertex GLuint, fragment GLuint)
+
+func create(this *Shader, vertex_code *ubyte, fragment_code *ubyte) void {
+	log_length int
+	log_message *ubyte
+	status GLint
+
+	this.vertex = glCreateShader(GL_VERTEX_SHADER)
+	glShaderSource(this.vertex, 1, &vertex_code, null)
+	glCompileShader(this.vertex)
+	glGetShaderiv(this.vertex, GL_COMPILE_STATUS, &status)
+
+	if status == 0 {
+		puts('Failed to compile vertex shader')
+		log_message = malloc(cast usize log_length)
+		glGetShaderInfoLog(this.vertex, 1024, &log_length, log_message)
+		if log_length != 0, puts(log_message)
+		free(log_message)
+	}
+
+	this.fragment = glCreateShader(GL_FRAGMENT_SHADER)
+	glShaderSource(this.fragment, 1, &fragment_code, null)
+	glCompileShader(this.fragment)
+	glGetShaderiv(this.fragment, GL_COMPILE_STATUS, &status)
+
+	if status == 0 {
+		puts('Failed to compile fragment shader')
+		log_message = malloc(cast usize log_length)
+		glGetShaderInfoLog(this.fragment, 1024, &log_length, log_message)
+		if log_length != 0, puts(log_message)
+		free(log_message)
+	}
+
+	this.program = glCreateProgram()
+	glAttachShader(this.program, this.fragment)
+	glAttachShader(this.program, this.vertex)
+	glLinkProgram(this.program)
+	glValidateProgram(this.program)
+}
+
+func use(this *Shader) void {
+	glUseProgram(this.program)
+}
+
+func destroy(this *Shader) void {
+	glDetachShader(this.program, this.vertex)
+	glDetachShader(this.program, this.fragment)
+	glDeleteShader(this.vertex)
+	glDeleteShader(this.fragment)
+	glDeleteProgram(this.program)
+}
+
+func getUniformLocation(this *Shader, name *ubyte) GLint {
+	return glGetUniformLocation(this.program, name)
+}
+
+func uploadMatrix4f(this *Shader, location GLint, matrix Matrix4f) void {
+	glUniformMatrix4fv(location, 1, false, matrix.array)
+}

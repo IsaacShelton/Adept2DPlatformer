@@ -1,0 +1,178 @@
+
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+
+import 'gamedata.adept'
+
+foreign access(*ubyte, int) int
+F_OK == 0
+
+func qsortstrcmp(a **ubyte, b **ubyte) int {
+    return strcmp(*a, *b);
+}
+
+OBJ_ASCEND_PLATFORM   == 0
+OBJ_BOUNCY_PLATFORM   == 1
+OBJ_BOX               == 2
+OBJ_DEATH_PLATFORM    == 3
+OBJ_DESCEND_PLATFORM  == 4
+OBJ_DESTROY_PLATFORM  == 5
+OBJ_ELEVATOR_PLATFORM == 6
+OBJ_HIDDEN_PLATFORM   == 7
+OBJ_JUMPER            == 8
+OBJ_PLATFORM          == 9
+OBJ_PLAYER            == 10
+OBJ_PORTAL            == 11
+
+func loadMaps(gamedata *GameData) void {
+    map_index usize = 0
+    filename *ubyte = malloc(256)
+
+    object_names_length usize = 12
+    object_names **ubyte = malloc(sizeof *ubyte * object_names_length)
+    object_names[0]  = 'ascend_platform'
+    object_names[1]  = 'bouncy_platform'
+    object_names[2]  = 'box'
+    object_names[3]  = 'death_platform'
+    object_names[4]  = 'descend_platform'
+    object_names[5]  = 'destroy_platform'
+    object_names[6]  = 'elevator_platform'
+    object_names[7]  = 'hidden_platform'
+    object_names[8]  = 'jumper'
+    object_names[9]  = 'platform'
+    object_names[10] = 'player'
+    object_names[11] = 'portal'
+    //qsort(object_names, object_names_length, sizeof *ubyte, func &qsortstrcmp)
+
+    gamedata.levels_length = 0
+    levels_capacity usize = 0
+
+    while true {
+        sprintf(filename, 'maps/%d.txt', cast int map_index)
+        file *FILE = fopen(filename, 'r')
+        if file == null, free(filename); return
+
+        level Level
+        level.start_x = 0.0f; level.start_y = 0.0f
+        level.platforms = null; level.platforms_length = 0
+        level.boxes = null; level.boxes_length = 0
+        level.portal.x = 0.0f; level.portal.y = 0.0f
+        level.portal.activated = false
+        level.jumpers = null; level.jumpers_length = 0
+
+        obj *ubyte = malloc(256); x, y int
+        platforms_capacity usize = 0
+        boxes_capacity usize = 0
+        jumpers_capacity usize = 0
+
+        if fscanf(file, 'theme %s\n', obj) == 1 {
+            // 'obj' is reused as a buffer for the theme name
+            level.theme = getThemeByName(obj)
+        } else {
+            fseek(file, 0, SEEK_SET)
+            level.theme = THEME_PURPLE
+        }
+
+        while fscanf(file, '%s @ %d %d\n', obj, &x, &y) == 3 {
+            id int = binary_string_search(object_names, object_names_length, obj)
+            if id == -1, puts('unknown obj id'); return
+
+            if id == OBJ_PLAYER, level.start_x = cast float x; level.start_y = cast float y
+            else if id == OBJ_PORTAL {
+                level.portal.x = cast float x; level.portal.y = cast float y
+                level.portal.activated = true
+            } else if id == OBJ_BOX {
+                expand(cast ptr &level.boxes, sizeof Box, level.boxes_length, &boxes_capacity)
+                level.boxes[level.boxes_length].create(cast float x, cast float y, &gamedata.box_texture)
+                level.boxes_length += 1
+            } else if id == OBJ_PLATFORM {
+                expand(cast ptr &level.platforms, sizeof Platform, level.platforms_length, &platforms_capacity)
+                level.platforms[level.platforms_length].create(cast float x, cast float y, 128.0f, 16.0f,
+                    gamedata.resources_ref.platform, PLATFORM_TYPE_PLAIN)
+                level.platforms_length += 1
+            } else if id == OBJ_BOUNCY_PLATFORM {
+                expand(cast ptr &level.platforms, sizeof Platform, level.platforms_length, &platforms_capacity)
+                level.platforms[level.platforms_length].create(cast float x, cast float y, 128.0f, 16.0f,
+                    gamedata.resources_ref.platform_bouncy, PLATFORM_TYPE_BOUNCY)
+                level.platforms_length += 1
+            } else if id == OBJ_HIDDEN_PLATFORM {
+                expand(cast ptr &level.platforms, sizeof Platform, level.platforms_length, &platforms_capacity)
+                level.platforms[level.platforms_length].create(cast float x, cast float y, 128.0f, 16.0f,
+                    gamedata.resources_ref.platform_hidden, PLATFORM_TYPE_HIDDEN)
+                level.platforms_length += 1
+            } else if id == OBJ_DEATH_PLATFORM {
+                expand(cast ptr &level.platforms, sizeof Platform, level.platforms_length, &platforms_capacity)
+                level.platforms[level.platforms_length].create(cast float x, cast float y, 128.0f, 16.0f,
+                    gamedata.resources_ref.platform_death, PLATFORM_TYPE_DEATH)
+                level.platforms_length += 1
+            } else if id == OBJ_DESTROY_PLATFORM {
+                expand(cast ptr &level.platforms, sizeof Platform, level.platforms_length, &platforms_capacity)
+                level.platforms[level.platforms_length].create(cast float x, cast float y, 128.0f, 16.0f,
+                    gamedata.resources_ref.platform_destroy, PLATFORM_TYPE_DESTROY)
+                level.platforms_length += 1
+            } else if id == OBJ_JUMPER {
+                expand(cast ptr &level.jumpers, sizeof Jumper, level.jumpers_length, &jumpers_capacity)
+                level.jumpers[level.jumpers_length].create(cast float x, cast float y, &gamedata.jumper_texture)
+                level.jumpers_length += 1
+            } else if id == OBJ_ASCEND_PLATFORM {
+                expand(cast ptr &level.platforms, sizeof Platform, level.platforms_length, &platforms_capacity)
+                level.platforms[level.platforms_length].create(cast float x, cast float y, 128.0f, 16.0f,
+                    gamedata.resources_ref.platform_ascend, PLATFORM_TYPE_ASCEND)
+                level.platforms_length += 1
+            } else if id == OBJ_DESCEND_PLATFORM {
+                expand(cast ptr &level.platforms, sizeof Platform, level.platforms_length, &platforms_capacity)
+                level.platforms[level.platforms_length].create(cast float x, cast float y, 128.0f, 16.0f,
+                    gamedata.resources_ref.platform_descend, PLATFORM_TYPE_DESCEND)
+                level.platforms_length += 1
+            } else if id == OBJ_ELEVATOR_PLATFORM {
+                expand(cast ptr &level.platforms, sizeof Platform, level.platforms_length, &platforms_capacity)
+                level.platforms[level.platforms_length].create(cast float x, cast float y, 128.0f, 16.0f,
+                    gamedata.resources_ref.platform_elevator, PLATFORM_TYPE_ELEVATOR)
+                level.platforms_length += 1
+            }
+        }
+
+        free(obj)
+        fclose(file)
+        map_index += 1
+
+        expand(cast ptr &gamedata.levels, sizeof Level, gamedata.levels_length, &levels_capacity)
+        gamedata.levels[gamedata.levels_length] = level
+        gamedata.levels_length += 1
+    }
+}
+
+func expand(array *ptr, item_size usize, length usize, capacity *usize) void {
+    if *array == null {
+        *capacity = 4; *array = malloc(item_size * *capacity)
+        return
+    }
+
+    while length + 1 > *capacity {
+        *capacity *= 2; new_array ptr = malloc(item_size * *capacity)
+        memcpy(new_array, *array, item_size * length)
+        free(*array)
+        *array = new_array
+    }
+}
+
+func binary_string_search(in strings **ubyte, in string_count usize, in target *ubyte) int {
+    first, middle, last, comparison int
+    first = 0; last = string_count - 1
+
+    while first <= last {
+        middle = (first + last) / 2
+        comparison = strcmp(strings[middle], target)
+        if comparison == 0, return middle
+        else if comparison > 0, last = middle - 1
+        else first = middle + 1
+    }
+
+    return -1
+}
+
+func getThemeByName(in name *ubyte) uint {
+    if strcmp(name, 'purple') == 0, return THEME_PURPLE
+    if strcmp(name, 'green')  == 0, return THEME_GREEN
+    return THEME_PURPLE
+}

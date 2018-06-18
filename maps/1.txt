@@ -1,0 +1,10 @@
+theme purple
+player @ 0 0
+box @ 160 96
+box @ 160 32
+box @ 160 -32
+box @ 160 -96
+platform @ -64 160
+platform @ 64 160
+platform @ 192 160
+portal @ 448 -96

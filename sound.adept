@@ -1,0 +1,151 @@
+
+foreign 'OpenAL32.dll'
+foreign 'libalut.dll'
+
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+
+foreign alutInit(*int, **ubyte) bool
+foreign alutExit() bool
+foreign alutGetError() uint
+foreign alutLoadWAVFile(*ubyte, *uint, *ptr, *usize, *usize, *bool) ptr
+foreign alutUnloadWAV(uint, ptr, usize, usize) void
+
+foreign alGetError() uint
+foreign alListenerfv(uint, ptr) void
+foreign alSourcePlay(uint) void
+foreign alSourceStop(uint) void
+foreign alDeleteBuffers(int, *uint) void
+foreign alDeleteSources(int, *uint) void
+foreign alGenBuffers(int, *uint) void
+foreign alGenSources(int, *uint) void
+foreign alBufferData(uint, uint, ptr, usize, usize) void
+foreign alSourcei(uint, uint, uint) void
+foreign alSourcef(uint, uint, float) void
+foreign alSourcefv(uint, uint, *float) void
+
+AL_NO_ERROR == 0ui
+AL_POSITION == 0x1004ui
+AL_VELOCITY == 0x1006ui
+AL_PITCH == 0x1003ui
+AL_LOOPING == 0x1007ui
+AL_ORIENTATION == 0x100Fui
+AL_BUFFER == 0x1009ui
+AL_GAIN == 0x100Aui
+
+func soundInit() void {
+    alutInit(null, null)
+    soundInitListener()
+    alGetError()
+}
+
+func soundTerminate() void {
+    alutExit()
+}
+
+func load(this *Sound, filename *ubyte, looping bool, volume float) void {
+    format uint; data ptr
+    size, freq usize
+
+    this.create()
+
+    if alGetError() != AL_NO_ERROR {
+        puts('Error failed to load sound')
+        return
+    }
+
+    alutLoadWAVFile(filename, &format, &data, &size, &freq, null)
+    alBufferData(this.buffer_id, format, data, size, freq)
+    alutUnloadWAV(format, data, size, freq)
+    this.loop = looping
+    this.volume = volume
+}
+
+struct Sound(buffer_id uint, loop bool, volume float)
+
+func create(this *Sound) void {
+    alGenBuffers(1, &this.buffer_id)
+}
+
+func create(this *Sound, buffer_id uint) void {
+    this.buffer_id = buffer_id
+}
+
+func destroy(this *Sound) void {
+    alDeleteBuffers(1, &this.buffer_id)
+}
+
+struct SoundPlayer (source_id uint)
+
+func create(this *SoundPlayer) void {
+    zeros *float = malloc(sizeof float * 3)
+    zeros[0] = 0.0f; zeros[1] = 0.0f; zeros[2] = 0.0f
+
+    alGenSources(1, &this.source_id)
+    alSourcefv(this.source_id, AL_POSITION, zeros)
+    alSourcefv(this.source_id, AL_VELOCITY, zeros)
+    free(zeros)
+
+    if alGetError() != AL_NO_ERROR {
+        puts('Failed to create audio source')
+        return
+    }
+}
+
+func bindSound(this *SoundPlayer, sound Sound) void {
+    alSourcei(this.source_id, AL_LOOPING, cast uint sound.loop)
+    alSourcei(this.source_id, AL_BUFFER, sound.buffer_id)
+    alSourcef(this.source_id, AL_PITCH, 1.0f)
+    alSourcef(this.source_id, AL_GAIN, sound.volume)
+}
+
+func play(this *SoundPlayer) void {
+    alSourcePlay(this.source_id)
+}
+
+func stop(this *SoundPlayer) void {
+    alSourceStop(this.source_id)
+}
+
+func destroy(this *SoundPlayer) void {
+    alDeleteSources(1, &this.source_id)
+}
+
+struct PlayableSound (sound Sound, player SoundPlayer)
+
+func load(this *PlayableSound, filename *ubyte, looping bool, volume float) void {
+    this.sound.load(filename, looping, volume)
+    this.player.create()
+    this.player.bindSound(this.sound)
+}
+
+func play(this *PlayableSound) void {
+    alSourcePlay(this.player.source_id)
+}
+
+func stop(this *PlayableSound) void {
+    alSourceStop(this.player.source_id)
+}
+
+func destroy(this *PlayableSound) void {
+    this.player.destroy()
+    this.sound.destroy()
+}
+
+func soundInitListener() void {
+    listener_pos *float = malloc(sizeof float * 3)
+    listener_vel *float = malloc(sizeof float * 3)
+    listener_ori *float = malloc(sizeof float * 6)
+
+    listener_pos[0] = 0.0f; listener_pos[1] = 0.0f; listener_pos[2] = 0.0f
+    listener_vel[0] = 0.0f; listener_vel[1] = 0.0f; listener_vel[2] = 0.0f
+    listener_ori[0] = 0.0f; listener_ori[1] = 0.0f; listener_ori[2] = -1.0f
+    listener_ori[3] = 0.0f; listener_ori[4] = 1.0f; listener_ori[5] = 0.0f
+
+    alListenerfv(AL_POSITION,    listener_pos)
+    alListenerfv(AL_VELOCITY,    listener_vel)
+    alListenerfv(AL_ORIENTATION, listener_ori)
+    free(listener_pos)
+    free(listener_vel)
+    free(listener_ori)
+}

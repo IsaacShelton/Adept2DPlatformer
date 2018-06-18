@@ -1,0 +1,366 @@
+
+import 'model.adept'
+import 'sound.adept'
+import 'shader.adept'
+import 'animation.adept'
+
+import 'glfw/glfw.adept'
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+import 'adept/string.adept'
+import 'adept/filetypes/bitmap.adept'
+
+struct Resources (
+	shader Shader,
+	start GLuint, quit GLuint, selection GLuint, credits_text GLuint,
+
+	p_player_idle_r_0 GLuint, p_player_idle_r_1 GLuint,
+	p_player_idle_l_0 GLuint, p_player_idle_l_1 GLuint,
+	p_player_walk_r_0 GLuint, p_player_walk_r_1 GLuint,
+	p_player_walk_l_0 GLuint, p_player_walk_l_1 GLuint,
+	p_player_punch_r_0 GLuint, p_player_punch_r_1 GLuint,
+	p_player_punch_r_2 GLuint, p_player_punch_r_3 GLuint,
+	p_player_punch_l_0 GLuint, p_player_punch_l_1 GLuint,
+	p_player_punch_l_2 GLuint, p_player_punch_l_3 GLuint,
+	p_box GLuint, p_portal GLuint,
+
+	g_player_idle_r_0 GLuint, g_player_idle_r_1 GLuint,
+	g_player_idle_l_0 GLuint, g_player_idle_l_1 GLuint,
+	g_player_walk_r_0 GLuint, g_player_walk_r_1 GLuint,
+	g_player_walk_l_0 GLuint, g_player_walk_l_1 GLuint,
+	g_player_punch_r_0 GLuint, g_player_punch_r_1 GLuint,
+	g_player_punch_r_2 GLuint, g_player_punch_r_3 GLuint,
+	g_player_punch_l_0 GLuint, g_player_punch_l_1 GLuint,
+	g_player_punch_l_2 GLuint, g_player_punch_l_3 GLuint,
+	g_box GLuint, g_portal GLuint, g_jumper GLuint,
+
+	platform GLuint, platform_bouncy GLuint,
+	platform_death GLuint, platform_hidden GLuint,
+	platform_destroy GLuint, platform_ascend GLuint, platform_descend GLuint,
+	platform_elevator GLuint,
+
+	p_player_punch_r_animation_data *GLuint,
+	p_player_punch_l_animation_data *GLuint,
+
+	g_player_punch_r_animation_data *GLuint,
+	g_player_punch_l_animation_data *GLuint,
+
+	music PlayableSound, bounce PlayableSound, punch PlayableSound,
+	destroy PlayableSound, death PlayableSound, teleport PlayableSound,
+	discover PlayableSound, jumper PlayableSound,
+
+	p_player_idle_r_animation Animation, p_player_idle_l_animation Animation,
+	p_player_walk_r_animation Animation, p_player_walk_l_animation Animation,
+	p_player_punch_r_animation Animation, p_player_punch_l_animation Animation,
+
+	g_player_idle_r_animation Animation, g_player_idle_l_animation Animation,
+	g_player_walk_r_animation Animation, g_player_walk_l_animation Animation,
+	g_player_punch_r_animation Animation, g_player_punch_l_animation Animation,
+
+	model_128x128 Model, model_128x16 Model, model_64x64 Model, model_64x64_r Model, model_64x128 Model, model_256x64 Model
+)
+
+func load(this *Resources) void {
+	this.shader.create('#version 400 core\nlayout(location = 0) in vec3 vp;\nlayout(location = 1) in vec2 texture_coords;\nuniform mat4 projection;\nuniform mat4 transformation;\nout vec2 uvs;\nvoid main() {\nuvs = texture_coords;\ngl_Position = projection * transformation * vec4(vp, 1.0);\n}',
+				'#version 400 core\nin vec2 uvs;\nout vec4 color;\nuniform sampler2D texture_sampler;\nvoid main(void) {\ncolor = texture(texture_sampler, uvs);if(color.a == 0) discard;\n}')
+
+	bitmap_info BitmapInfo
+	this.start = loadTexture('res/start.bmp', &bitmap_info)
+	this.quit = loadTexture('res/quit.bmp', &bitmap_info)
+	this.selection = loadTexture('res/selection.bmp', &bitmap_info)
+	this.credits_text = loadTexture('res/credits_text.bmp', &bitmap_info)
+
+	this.p_player_idle_r_0 = loadTexture('res/p_player_idle_r_0.bmp', &bitmap_info)
+	this.p_player_idle_r_1 = loadTexture('res/p_player_idle_r_1.bmp', &bitmap_info)
+	this.p_player_idle_l_0 = loadTexture('res/p_player_idle_l_0.bmp', &bitmap_info)
+	this.p_player_idle_l_1 = loadTexture('res/p_player_idle_l_1.bmp', &bitmap_info)
+	this.p_player_walk_r_0 = loadTexture('res/p_player_walk_r_0.bmp', &bitmap_info)
+	this.p_player_walk_r_1 = loadTexture('res/p_player_walk_r_1.bmp', &bitmap_info)
+	this.p_player_walk_l_0 = loadTexture('res/p_player_walk_l_0.bmp', &bitmap_info)
+	this.p_player_walk_l_1 = loadTexture('res/p_player_walk_l_1.bmp', &bitmap_info)
+	this.p_player_punch_r_0 = loadTexture('res/p_player_punch_r_0.bmp', &bitmap_info)
+	this.p_player_punch_r_1 = loadTexture('res/p_player_punch_r_1.bmp', &bitmap_info)
+	this.p_player_punch_r_2 = loadTexture('res/p_player_punch_r_2.bmp', &bitmap_info)
+	this.p_player_punch_r_3 = loadTexture('res/p_player_punch_r_3.bmp', &bitmap_info)
+	this.p_player_punch_l_0 = loadTexture('res/p_player_punch_l_0.bmp', &bitmap_info)
+	this.p_player_punch_l_1 = loadTexture('res/p_player_punch_l_1.bmp', &bitmap_info)
+	this.p_player_punch_l_2 = loadTexture('res/p_player_punch_l_2.bmp', &bitmap_info)
+	this.p_player_punch_l_3 = loadTexture('res/p_player_punch_l_3.bmp', &bitmap_info)
+	this.p_box = loadTexture('res/p_box.bmp', &bitmap_info)
+	this.p_portal = loadTexture('res/p_portal.bmp', &bitmap_info)
+
+	this.g_player_idle_r_0 = loadTexture('res/g_player_idle_r_0.bmp', &bitmap_info)
+	this.g_player_idle_r_1 = loadTexture('res/g_player_idle_r_1.bmp', &bitmap_info)
+	this.g_player_idle_l_0 = loadTexture('res/g_player_idle_l_0.bmp', &bitmap_info)
+	this.g_player_idle_l_1 = loadTexture('res/g_player_idle_l_1.bmp', &bitmap_info)
+	this.g_player_walk_r_0 = loadTexture('res/g_player_walk_r_0.bmp', &bitmap_info)
+	this.g_player_walk_r_1 = loadTexture('res/g_player_walk_r_1.bmp', &bitmap_info)
+	this.g_player_walk_l_0 = loadTexture('res/g_player_walk_l_0.bmp', &bitmap_info)
+	this.g_player_walk_l_1 = loadTexture('res/g_player_walk_l_1.bmp', &bitmap_info)
+	this.g_player_punch_r_0 = loadTexture('res/g_player_punch_r_0.bmp', &bitmap_info)
+	this.g_player_punch_r_1 = loadTexture('res/g_player_punch_r_1.bmp', &bitmap_info)
+	this.g_player_punch_r_2 = loadTexture('res/g_player_punch_r_2.bmp', &bitmap_info)
+	this.g_player_punch_r_3 = loadTexture('res/g_player_punch_r_3.bmp', &bitmap_info)
+	this.g_player_punch_l_0 = loadTexture('res/g_player_punch_l_0.bmp', &bitmap_info)
+	this.g_player_punch_l_1 = loadTexture('res/g_player_punch_l_1.bmp', &bitmap_info)
+	this.g_player_punch_l_2 = loadTexture('res/g_player_punch_l_2.bmp', &bitmap_info)
+	this.g_player_punch_l_3 = loadTexture('res/g_player_punch_l_3.bmp', &bitmap_info)
+	this.g_box = loadTexture('res/g_box.bmp', &bitmap_info)
+	this.g_portal = loadTexture('res/g_portal.bmp', &bitmap_info)
+	this.g_jumper = loadTexture('res/g_jumper.bmp', &bitmap_info)
+
+	this.platform = loadTexture('res/platform.bmp', &bitmap_info)
+	this.platform_bouncy = loadTexture('res/platform_bouncy.bmp', &bitmap_info)
+	this.platform_death = loadTexture('res/platform_death.bmp', &bitmap_info)
+	this.platform_hidden = loadTexture('res/platform_hidden.bmp', &bitmap_info)
+	this.platform_destroy = loadTexture('res/platform_destroy.bmp', &bitmap_info)
+	this.platform_ascend = loadTexture('res/platform_ascend.bmp', &bitmap_info)
+	this.platform_descend = loadTexture('res/platform_descend.bmp', &bitmap_info)
+	this.platform_elevator = loadTexture('res/platform_elevator.bmp', &bitmap_info)
+
+	this.p_player_punch_r_animation_data = malloc(sizeof GLuint * 7)
+	this.p_player_punch_l_animation_data = malloc(sizeof GLuint * 7)
+
+	this.g_player_punch_r_animation_data = malloc(sizeof GLuint * 7)
+	this.g_player_punch_l_animation_data = malloc(sizeof GLuint * 7)
+
+	this.music.load('res/Dark-Things-2.wav', true, 1.0f)
+	this.bounce.load('res/bounce.wav', false, 0.5f)
+	this.punch.load('res/punch.wav', false, 1.0f)
+	this.destroy.load('res/destroy.wav', false, 1.0f)
+	this.death.load('res/death.wav', false, 1.0f)
+	this.teleport.load('res/teleport.wav', false, 1.0f)
+	this.discover.load('res/discover.wav', false, 1.0f)
+	this.jumper.load('res/jumper.wav', false, 1.0f)
+
+	this.p_player_punch_r_animation_data[0] = this.p_player_punch_r_0
+	this.p_player_punch_r_animation_data[1] = this.p_player_punch_r_1
+	this.p_player_punch_r_animation_data[2] = this.p_player_punch_r_2
+	this.p_player_punch_r_animation_data[3] = this.p_player_punch_r_3
+	this.p_player_punch_r_animation_data[4] = this.p_player_punch_r_2
+	this.p_player_punch_r_animation_data[5] = this.p_player_punch_r_1
+	this.p_player_punch_r_animation_data[6] = this.p_player_punch_r_0
+	this.p_player_punch_l_animation_data[0] = this.p_player_punch_l_0
+	this.p_player_punch_l_animation_data[1] = this.p_player_punch_l_1
+	this.p_player_punch_l_animation_data[2] = this.p_player_punch_l_2
+	this.p_player_punch_l_animation_data[3] = this.p_player_punch_l_3
+	this.p_player_punch_l_animation_data[4] = this.p_player_punch_l_2
+	this.p_player_punch_l_animation_data[5] = this.p_player_punch_l_1
+	this.p_player_punch_l_animation_data[6] = this.p_player_punch_l_0
+
+	this.g_player_punch_r_animation_data[0] = this.g_player_punch_r_0
+	this.g_player_punch_r_animation_data[1] = this.g_player_punch_r_1
+	this.g_player_punch_r_animation_data[2] = this.g_player_punch_r_2
+	this.g_player_punch_r_animation_data[3] = this.g_player_punch_r_3
+	this.g_player_punch_r_animation_data[4] = this.g_player_punch_r_2
+	this.g_player_punch_r_animation_data[5] = this.g_player_punch_r_1
+	this.g_player_punch_r_animation_data[6] = this.g_player_punch_r_0
+	this.g_player_punch_l_animation_data[0] = this.g_player_punch_l_0
+	this.g_player_punch_l_animation_data[1] = this.g_player_punch_l_1
+	this.g_player_punch_l_animation_data[2] = this.g_player_punch_l_2
+	this.g_player_punch_l_animation_data[3] = this.g_player_punch_l_3
+	this.g_player_punch_l_animation_data[4] = this.g_player_punch_l_2
+	this.g_player_punch_l_animation_data[5] = this.g_player_punch_l_1
+	this.g_player_punch_l_animation_data[6] = this.g_player_punch_l_0
+
+	this.p_player_idle_r_animation.create(&this.p_player_idle_r_0, 2ui, 60ui)
+	this.p_player_idle_l_animation.create(&this.p_player_idle_l_0, 2ui, 60ui)
+	this.p_player_walk_r_animation.create(&this.p_player_walk_r_0, 2ui, 10ui)
+	this.p_player_walk_l_animation.create(&this.p_player_walk_l_0, 2ui, 10ui)
+	this.p_player_punch_r_animation.create(this.p_player_punch_r_animation_data, 7ui, 2ui)
+	this.p_player_punch_l_animation.create(this.p_player_punch_l_animation_data, 7ui, 2ui)
+
+	this.g_player_idle_r_animation.create(&this.g_player_idle_r_0, 2ui, 60ui)
+	this.g_player_idle_l_animation.create(&this.g_player_idle_l_0, 2ui, 60ui)
+	this.g_player_walk_r_animation.create(&this.g_player_walk_r_0, 2ui, 10ui)
+	this.g_player_walk_l_animation.create(&this.g_player_walk_l_0, 2ui, 10ui)
+	this.g_player_punch_r_animation.create(this.g_player_punch_r_animation_data, 7ui, 2ui)
+	this.g_player_punch_l_animation.create(this.g_player_punch_l_animation_data, 7ui, 2ui)
+
+
+	points_128x128_length usize = 18
+	points_128x128 *float = malloc(sizeof float * points_128x128_length)
+	defer free(points_128x128)
+
+	points_128x16_length usize = 18
+	points_128x16 *float = malloc(sizeof float * points_128x16_length)
+	defer free(points_128x16)
+
+	points_64x64_length usize = 18
+	points_64x64 *float = malloc(sizeof float * points_64x64_length)
+	defer free(points_64x64)
+
+	points_64x128_length usize = 18
+	points_64x128 *float = malloc(sizeof float * points_64x128_length)
+	defer free(points_64x128)
+
+	points_256x64_length usize = 18
+	points_256x64 *float = malloc(sizeof float * points_256x64_length)
+	defer free(points_256x64)
+
+	square_uv_data_length usize = 12
+	square_uv_data *float = malloc(sizeof float * square_uv_data_length)
+	defer free(square_uv_data)
+
+	reverse_square_uv_data_length usize = 12
+	reverse_square_uv_data *float = malloc(sizeof float * reverse_square_uv_data_length)
+	defer free(reverse_square_uv_data)
+
+	points_128x128[0] = 0.0f;    points_128x128[1] = 128.0f;  points_128x128[2] = 0.0f
+	points_128x128[3] = 0.0f;    points_128x128[4] = 0.0f;    points_128x128[5] = 0.0f
+	points_128x128[6] = 128.0f;  points_128x128[7] = 0.0f;    points_128x128[8] = 0.0f
+	points_128x128[9] = 0.0f;    points_128x128[10] = 128.0f; points_128x128[11] = 0.0f
+	points_128x128[12] = 128.0f; points_128x128[13] = 0.0f;   points_128x128[14] = 0.0f
+	points_128x128[15] = 128.0f; points_128x128[16] = 128.0f; points_128x128[17] = 0.0f
+
+	points_128x16[0] = 0.0f;    points_128x16[1] = 16.0f;  points_128x16[2] = 0.0f
+	points_128x16[3] = 0.0f;    points_128x16[4] = 0.0f;   points_128x16[5] = 0.0f
+	points_128x16[6] = 128.0f;  points_128x16[7] = 0.0f;   points_128x16[8] = 0.0f
+	points_128x16[9] = 0.0f;    points_128x16[10] = 16.0f; points_128x16[11] = 0.0f
+	points_128x16[12] = 128.0f; points_128x16[13] = 0.0f;  points_128x16[14] = 0.0f
+	points_128x16[15] = 128.0f; points_128x16[16] = 16.0f; points_128x16[17] = 0.0f
+
+	points_64x64[0] = 0.0f;   points_64x64[1] = 64.0f;  points_64x64[2] = 0.0f
+	points_64x64[3] = 0.0f;   points_64x64[4] = 0.0f;   points_64x64[5] = 0.0f
+	points_64x64[6] = 64.0f;  points_64x64[7] = 0.0f;   points_64x64[8] = 0.0f
+	points_64x64[9] = 0.0f;   points_64x64[10] = 64.0f; points_64x64[11] = 0.0f
+	points_64x64[12] = 64.0f; points_64x64[13] = 0.0f;  points_64x64[14] = 0.0f
+	points_64x64[15] = 64.0f; points_64x64[16] = 64.0f; points_64x64[17] = 0.0f
+
+	points_64x128[0] = 0.0f;   points_64x128[1] = 128.0f;  points_64x128[2] = 0.0f
+	points_64x128[3] = 0.0f;   points_64x128[4] = 0.0f;    points_64x128[5] = 0.0f
+	points_64x128[6] = 64.0f;  points_64x128[7] = 0.0f;    points_64x128[8] = 0.0f
+	points_64x128[9] = 0.0f;   points_64x128[10] = 128.0f; points_64x128[11] = 0.0f
+	points_64x128[12] = 64.0f; points_64x128[13] = 0.0f;   points_64x128[14] = 0.0f
+	points_64x128[15] = 64.0f; points_64x128[16] = 128.0f; points_64x128[17] = 0.0f
+
+	points_256x64[0] = 0.0f;    points_256x64[1] = 64.0f;  points_256x64[2] = 0.0f
+	points_256x64[3] = 0.0f;    points_256x64[4] = 0.0f;   points_256x64[5] = 0.0f
+	points_256x64[6] = 256.0f;  points_256x64[7] = 0.0f;   points_256x64[8] = 0.0f
+	points_256x64[9] = 0.0f;    points_256x64[10] = 64.0f; points_256x64[11] = 0.0f
+	points_256x64[12] = 256.0f; points_256x64[13] = 0.0f;  points_256x64[14] = 0.0f
+	points_256x64[15] = 256.0f; points_256x64[16] = 64.0f; points_256x64[17] = 0.0f
+
+	square_uv_data[0]  = 0.0f; square_uv_data[1]  = 0.0f
+	square_uv_data[2]  = 0.0f; square_uv_data[3]  = 1.0f
+	square_uv_data[4]  = 1.0f; square_uv_data[5]  = 1.0f
+	square_uv_data[6]  = 0.0f; square_uv_data[7]  = 0.0f
+	square_uv_data[8]  = 1.0f; square_uv_data[9]  = 1.0f
+	square_uv_data[10] = 1.0f; square_uv_data[11] = 0.0f
+
+	reverse_square_uv_data[0]  = 1.0f; reverse_square_uv_data[1]  = 0.0f
+	reverse_square_uv_data[2]  = 1.0f; reverse_square_uv_data[3]  = 1.0f
+	reverse_square_uv_data[4]  = 0.0f; reverse_square_uv_data[5]  = 1.0f
+	reverse_square_uv_data[6]  = 1.0f; reverse_square_uv_data[7]  = 0.0f
+	reverse_square_uv_data[8]  = 0.0f; reverse_square_uv_data[9]  = 1.0f
+	reverse_square_uv_data[10] = 0.0f; reverse_square_uv_data[11] = 0.0f
+
+	this.model_128x128.create(points_128x128, points_128x128_length,
+		square_uv_data, square_uv_data_length)
+	this.model_128x16.create(points_128x16, points_128x16_length,
+		square_uv_data, square_uv_data_length)
+	this.model_64x64.create(points_64x64, points_64x64_length,
+		square_uv_data, square_uv_data_length)
+	this.model_64x64_r.create(points_64x64, points_64x64_length,
+		reverse_square_uv_data, reverse_square_uv_data_length)
+	this.model_64x128.create(points_64x128, points_64x128_length,
+		square_uv_data, square_uv_data_length)
+	this.model_256x64.create(points_256x64, points_256x64_length,
+		square_uv_data, square_uv_data_length)
+}
+
+func destroy(this *Resources) void {
+	this.shader.destroy()
+
+	glDeleteTextures(1, &this.start)
+	glDeleteTextures(1, &this.quit)
+	glDeleteTextures(1, &this.selection)
+	glDeleteTextures(1, &this.credits_text)
+
+	glDeleteTextures(1, &this.p_player_idle_r_0)
+	glDeleteTextures(1, &this.p_player_idle_r_1)
+	glDeleteTextures(1, &this.p_player_idle_l_0)
+	glDeleteTextures(1, &this.p_player_idle_l_1)
+	glDeleteTextures(1, &this.p_player_walk_r_0)
+	glDeleteTextures(1, &this.p_player_walk_r_1)
+	glDeleteTextures(1, &this.p_player_walk_l_0)
+	glDeleteTextures(1, &this.p_player_walk_l_1)
+	glDeleteTextures(1, &this.p_player_punch_r_0)
+	glDeleteTextures(1, &this.p_player_punch_r_1)
+	glDeleteTextures(1, &this.p_player_punch_r_2)
+	glDeleteTextures(1, &this.p_player_punch_r_3)
+	glDeleteTextures(1, &this.p_player_punch_l_0)
+	glDeleteTextures(1, &this.p_player_punch_l_1)
+	glDeleteTextures(1, &this.p_player_punch_l_2)
+	glDeleteTextures(1, &this.p_player_punch_l_3)
+	glDeleteTextures(1, &this.p_box)
+	glDeleteTextures(1, &this.p_portal)
+
+	glDeleteTextures(1, &this.g_player_idle_r_0)
+	glDeleteTextures(1, &this.g_player_idle_r_1)
+	glDeleteTextures(1, &this.g_player_idle_l_0)
+	glDeleteTextures(1, &this.g_player_idle_l_1)
+	glDeleteTextures(1, &this.g_player_walk_r_0)
+	glDeleteTextures(1, &this.g_player_walk_r_1)
+	glDeleteTextures(1, &this.g_player_walk_l_0)
+	glDeleteTextures(1, &this.g_player_walk_l_1)
+	glDeleteTextures(1, &this.g_player_punch_r_0)
+	glDeleteTextures(1, &this.g_player_punch_r_1)
+	glDeleteTextures(1, &this.g_player_punch_r_2)
+	glDeleteTextures(1, &this.g_player_punch_r_3)
+	glDeleteTextures(1, &this.g_player_punch_l_0)
+	glDeleteTextures(1, &this.g_player_punch_l_1)
+	glDeleteTextures(1, &this.g_player_punch_l_2)
+	glDeleteTextures(1, &this.g_player_punch_l_3)
+	glDeleteTextures(1, &this.g_box)
+	glDeleteTextures(1, &this.g_portal)
+	glDeleteTextures(1, &this.g_jumper)
+
+	glDeleteTextures(1, &this.platform)
+	glDeleteTextures(1, &this.platform_bouncy)
+	glDeleteTextures(1, &this.platform_death)
+	glDeleteTextures(1, &this.platform_hidden)
+	glDeleteTextures(1, &this.platform_destroy)
+	glDeleteTextures(1, &this.platform_ascend)
+	glDeleteTextures(1, &this.platform_descend)
+	glDeleteTextures(1, &this.platform_elevator)
+
+	free(this.p_player_punch_r_animation_data)
+	free(this.p_player_punch_l_animation_data)
+
+	free(this.g_player_punch_r_animation_data)
+	free(this.g_player_punch_l_animation_data)
+
+	this.music.destroy()
+	this.bounce.destroy()
+	this.punch.destroy()
+	this.destroy.destroy()
+	this.death.destroy()
+	this.teleport.destroy()
+	this.discover.destroy()
+
+	this.model_128x128.destroy()
+	this.model_128x16.destroy()
+	this.model_64x64.destroy()
+	this.model_64x64_r.destroy()
+	this.model_64x128.destroy()
+	this.model_256x64.destroy()
+}
+
+func loadTexture(filename *ubyte, bitmap_info *BitmapInfo) GLuint {
+	texture GLuint
+	image *ubyte = loadBitmapABGR(filename, bitmap_info)
+
+	if image == null, printf('Failed to load bitmap "%s"\n', filename); return 0
+
+	glGenTextures(1, &texture)
+	glBindTexture(GL_TEXTURE_2D, texture)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bitmap_info.width, bitmap_info.height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, image)
+	glBindTexture(GL_TEXTURE_2D, 0ui)
+	free(image)
+	return texture
+}

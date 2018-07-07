@@ -1,4 +1,8 @@
 
+// -------------------------- resources.adept --------------------------
+// Module for resource management
+// ---------------------------------------------------------------------
+
 import 'model.adept'
 import 'sound.adept'
 import 'shader.adept'

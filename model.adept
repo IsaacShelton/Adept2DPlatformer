@@ -1,4 +1,8 @@
 
+// ---------------------------- model.adept ----------------------------
+// Module for handling OpenGL models
+// ---------------------------------------------------------------------
+
 import 'glfw/glfw.adept'
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'

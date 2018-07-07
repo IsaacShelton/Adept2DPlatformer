@@ -1,4 +1,8 @@
 
+// ----------------------------- map.adept -----------------------------
+// Module for loading maps from files
+// ---------------------------------------------------------------------
+
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'
 

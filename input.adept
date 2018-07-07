@@ -1,4 +1,8 @@
 
+// ----------------------------- input.adept -----------------------------
+// Module for detecting & handling player input
+// -----------------------------------------------------------------------
+
 import 'glfw/glfw.adept'
 
 import 'physics.adept'

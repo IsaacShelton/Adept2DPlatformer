@@ -1,4 +1,8 @@
 
+// ---------------------------- world.adept ----------------------------
+// Module for detecting and handling world events
+// ---------------------------------------------------------------------
+
 import 'sys/cstdio.adept'
 import 'gamedata.adept'
 

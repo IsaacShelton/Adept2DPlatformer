@@ -1,4 +1,8 @@
 
+// ----------------------------- aabb.adept -----------------------------
+// Module for detecting collision between axis-aligned bounding boxes
+// ----------------------------------------------------------------------
+
 struct AABB (x float, y float, w float, h float)
 
 func set(this *AABB, x float, y float, w float, h float) void {

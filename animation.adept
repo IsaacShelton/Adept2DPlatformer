@@ -1,4 +1,8 @@
 
+// --------------------------- animation.adept ---------------------------
+// Module for basic animation management
+// -----------------------------------------------------------------------
+
 struct Animation (frames *uint, length usize,
     current_frame usize, ticker usize, interval usize)
 

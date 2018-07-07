@@ -1,4 +1,8 @@
 
+// --------------------------- gamedata.adept ---------------------------
+// Module for storing the current state of the game
+// ----------------------------------------------------------------------
+
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'
 import 'sys/cstring.adept'

@@ -1,4 +1,8 @@
 
+// --------------------------- physics.adept ---------------------------
+// Module for simulating clunky game physics
+// ---------------------------------------------------------------------
+
 import 'gamedata.adept'
 import 'world.adept'
 

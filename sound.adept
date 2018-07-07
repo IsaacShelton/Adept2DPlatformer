@@ -1,4 +1,8 @@
 
+// ---------------------------- sound.adept ----------------------------
+// Module for playing & loading sound using OpenAL and ALUT
+// ---------------------------------------------------------------------
+
 foreign 'OpenAL32.dll'
 foreign 'libalut.dll'
 

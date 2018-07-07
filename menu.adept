@@ -1,4 +1,8 @@
 
+// ----------------------------- menu.adept -----------------------------
+// Module for handling the main menu
+// ----------------------------------------------------------------------
+
 import 'glfw/glfw.adept'
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'

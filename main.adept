@@ -1,4 +1,8 @@
 
+// ----------------------------- main.adept -----------------------------
+// Module for driving all the other parts of the game
+// ----------------------------------------------------------------------
+
 import 'glfw/glfw.adept'
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'
@@ -23,7 +27,7 @@ func main() int {
         glfwTerminate()
         return 1
     }
-    
+
     // Setup opengl
     glfwMakeContextCurrent(window)
     glfwSwapInterval(1)

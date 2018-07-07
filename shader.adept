@@ -1,4 +1,8 @@
 
+// ---------------------------- shader.adept ----------------------------
+// Module for OpenGL shader management
+// ----------------------------------------------------------------------
+
 import 'sys/cstdio.adept'
 import 'adept/math/matrix4f.adept'
 import 'glfw/glfw.adept'
@@ -17,7 +21,7 @@ func create(this *Shader, vertex_code *ubyte, fragment_code *ubyte) void {
 
 	if status == 0 {
 		puts('Failed to compile vertex shader')
-		log_message = malloc(cast usize log_length)
+		log_message = malloc(1024)
 		glGetShaderInfoLog(this.vertex, 1024, &log_length, log_message)
 		if log_length != 0, puts(log_message)
 		free(log_message)
@@ -30,15 +34,15 @@ func create(this *Shader, vertex_code *ubyte, fragment_code *ubyte) void {
 
 	if status == 0 {
 		puts('Failed to compile fragment shader')
-		log_message = malloc(cast usize log_length)
+		log_message = malloc(1024)
 		glGetShaderInfoLog(this.fragment, 1024, &log_length, log_message)
 		if log_length != 0, puts(log_message)
 		free(log_message)
 	}
 
 	this.program = glCreateProgram()
-	glAttachShader(this.program, this.fragment)
 	glAttachShader(this.program, this.vertex)
+	glAttachShader(this.program, this.fragment)
 	glLinkProgram(this.program)
 	glValidateProgram(this.program)
 }

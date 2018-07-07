@@ -1,4 +1,8 @@
 
+// ---------------------------- render.adept ----------------------------
+// Module for rendering the game
+// ----------------------------------------------------------------------
+
 import 'gamedata.adept'
 import 'resources.adept'
 

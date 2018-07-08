@@ -1,5 +1,5 @@
 # Adept2DPlatformer
-A 2D Platformer written in Adept 2.0
+A 2D Platformer written in [Adept 2.0](https://github.com/IsaacShelton/Adept)
 
 ### How to compile
 Navigate to the root of the project and run

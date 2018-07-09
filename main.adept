@@ -3,6 +3,9 @@
 // Module for driving all the other parts of the game
 // ----------------------------------------------------------------------
 
+pragma compiler_version '2.0'
+pragma project_name 'Adept2DPlatformer'
+
 import 'glfw/glfw.adept'
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'

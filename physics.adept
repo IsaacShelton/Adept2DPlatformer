@@ -184,8 +184,10 @@ func moveY(this *Platform, gamedata *GameData, by_y float) bool {
 }
 
 func simulateBoxes(gamedata *GameData) void {
+	box *Box = undef
+	
 	i usize = 0; while i != gamedata.boxes_length {
-		box *Box = &gamedata.boxes[i]
+		box = &gamedata.boxes[i]
         unless box.gone {
             unless box.moveX(gamedata, box.hspeed), box.hspeed = 0.0f
             if box.hspeed > 0.0, box.hspeed -= 0.2; if box.hspeed <  0.2, box.hspeed = 0.0
@@ -207,8 +209,10 @@ func simulateBoxes(gamedata *GameData) void {
 }
 
 func simulateJumpers(gamedata *GameData) void {
+	jumper *Jumper = undef
+	
 	i usize = 0; while i != gamedata.jumpers_length {
-		jumper *Jumper = &gamedata.jumpers[i]
+		jumper = &gamedata.jumpers[i]
         unless jumper.gone {
             if jumper.jumping {
                 hspeed_prev float = jumper.hspeed

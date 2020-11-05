@@ -3,8 +3,13 @@
 // Module for playing & loading sound using OpenAL and ALUT
 // ---------------------------------------------------------------------
 
+#if __windows__
 foreign 'OpenAL32.dll'
 foreign 'libalut.dll'
+#elif __macos__
+foreign 'OpenAL' framework
+foreign 'mac_libalut_static.a'
+#end
 
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'

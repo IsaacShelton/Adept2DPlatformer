@@ -10,116 +10,116 @@ import 'gamedata.adept'
 import 'resources.adept'
 
 func input(window *GLFWwindow, resources *Resources, gamedata *GameData) void {
-	platform_index usize
-	box_index usize
-	platform *Platform
-	box *Box
+    platform_index usize
+    box_index usize
+    platform *Platform
+    box *Box
 
-	if glfwGetKey(window, GLFW_KEY_ESCAPE), gamedata.sceneStartMenu(); return
-	cheats(window, gamedata)
+    if glfwGetKey(window, GLFW_KEY_ESCAPE), gamedata.sceneStartMenu(); return
+    cheats(window, gamedata)
 
-	on_ground bool = isPlayerOnGround(window, gamedata)
-	if glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS and on_ground, gamedata.player_vspeed = -20.0f
+    on_ground bool = isPlayerOnGround(window, gamedata)
+    if glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS and on_ground, gamedata.player_vspeed = -20.0f
 
-	if glfwGetKey(window, GLFW_KEY_RIGHT){
-		if gamedata.player_anim == gamedata.player_punch_l_anim {
-			gamedata.player_anim = gamedata.player_punch_r_anim
-			gamedata.player_anim.ticker = gamedata.player_punch_l_anim.ticker
-			gamedata.player_anim.current_frame = gamedata.player_punch_l_anim.current_frame
-		} else if gamedata.player_anim != gamedata.player_walk_r_anim and gamedata.player_anim != gamedata.player_punch_r_anim {
-			gamedata.player_anim = gamedata.player_walk_r_anim
-			gamedata.player_anim.reset()
-		}
-		movePlayerX(gamedata, 6.0f)
-	}
+    if glfwGetKey(window, GLFW_KEY_RIGHT){
+        if gamedata.player_anim == gamedata.player_punch_l_anim {
+            gamedata.player_anim = gamedata.player_punch_r_anim
+            gamedata.player_anim.ticker = gamedata.player_punch_l_anim.ticker
+            gamedata.player_anim.current_frame = gamedata.player_punch_l_anim.current_frame
+        } else if gamedata.player_anim != gamedata.player_walk_r_anim and gamedata.player_anim != gamedata.player_punch_r_anim {
+            gamedata.player_anim = gamedata.player_walk_r_anim
+            gamedata.player_anim.reset()
+        }
+        movePlayerX(gamedata, 6.0f)
+    }
 
-	if glfwGetKey(window, GLFW_KEY_LEFT){
-		if gamedata.player_anim == gamedata.player_punch_r_anim {
-			gamedata.player_anim = gamedata.player_punch_l_anim
-			gamedata.player_anim.ticker = gamedata.player_punch_r_anim.ticker
-			gamedata.player_anim.current_frame = gamedata.player_punch_r_anim.current_frame
-		} else if gamedata.player_anim != gamedata.player_walk_l_anim and gamedata.player_anim != gamedata.player_punch_l_anim {
-			gamedata.player_anim = gamedata.player_walk_l_anim
-			gamedata.player_anim.reset()
-		}
-		movePlayerX(gamedata, -6.0f)
-	}
+    if glfwGetKey(window, GLFW_KEY_LEFT){
+        if gamedata.player_anim == gamedata.player_punch_r_anim {
+            gamedata.player_anim = gamedata.player_punch_l_anim
+            gamedata.player_anim.ticker = gamedata.player_punch_r_anim.ticker
+            gamedata.player_anim.current_frame = gamedata.player_punch_r_anim.current_frame
+        } else if gamedata.player_anim != gamedata.player_walk_l_anim and gamedata.player_anim != gamedata.player_punch_l_anim {
+            gamedata.player_anim = gamedata.player_walk_l_anim
+            gamedata.player_anim.reset()
+        }
+        movePlayerX(gamedata, -6.0f)
+    }
 
-	if glfwGetKey(window, GLFW_KEY_LEFT) != GLFW_PRESS and glfwGetKey(window, GLFW_KEY_RIGHT) != GLFW_PRESS {
-		if gamedata.player_anim == gamedata.player_walk_r_anim {
-			gamedata.player_anim = gamedata.player_idle_r_anim
-			gamedata.player_anim.reset()
-		} else if gamedata.player_anim == gamedata.player_walk_l_anim {
-			gamedata.player_anim = gamedata.player_idle_l_anim
-			gamedata.player_anim.reset()
-		}
-	}
+    if glfwGetKey(window, GLFW_KEY_LEFT) != GLFW_PRESS and glfwGetKey(window, GLFW_KEY_RIGHT) != GLFW_PRESS {
+        if gamedata.player_anim == gamedata.player_walk_r_anim {
+            gamedata.player_anim = gamedata.player_idle_r_anim
+            gamedata.player_anim.reset()
+        } else if gamedata.player_anim == gamedata.player_walk_l_anim {
+            gamedata.player_anim = gamedata.player_idle_l_anim
+            gamedata.player_anim.reset()
+        }
+    }
 
-	if glfwGetKey(window, GLFW_KEY_SPACE) {
-		if gamedata.player_anim == gamedata.player_walk_r_anim or gamedata.player_anim == gamedata.player_idle_r_anim {
-			resources.punch.play()
-			gamedata.player_anim = gamedata.player_punch_r_anim
-			gamedata.player_anim.reset()
-		} else if gamedata.player_anim == gamedata.player_walk_l_anim or gamedata.player_anim == gamedata.player_idle_l_anim {
-			resources.punch.play()
-			gamedata.player_anim = gamedata.player_punch_l_anim
-			gamedata.player_anim.reset()
-		}
-	}
+    if glfwGetKey(window, GLFW_KEY_SPACE) {
+        if gamedata.player_anim == gamedata.player_walk_r_anim or gamedata.player_anim == gamedata.player_idle_r_anim {
+            resources.punch.play()
+            gamedata.player_anim = gamedata.player_punch_r_anim
+            gamedata.player_anim.reset()
+        } else if gamedata.player_anim == gamedata.player_walk_l_anim or gamedata.player_anim == gamedata.player_idle_l_anim {
+            resources.punch.play()
+            gamedata.player_anim = gamedata.player_punch_l_anim
+            gamedata.player_anim.reset()
+        }
+    }
 
-	if gamedata.player_anim == gamedata.player_punch_r_anim or
-			gamedata.player_anim == gamedata.player_punch_l_anim, playerHandlePunch(gamedata, resources)
+    if gamedata.player_anim == gamedata.player_punch_r_anim or
+            gamedata.player_anim == gamedata.player_punch_l_anim, playerHandlePunch(gamedata, resources)
 
-	simulateBoxes(gamedata)
-	simulateJumpers(gamedata)
-	movePlayerYJumping(gamedata, gamedata.player_vspeed)
+    simulateBoxes(gamedata)
+    simulateJumpers(gamedata)
+    movePlayerYJumping(gamedata, gamedata.player_vspeed)
 
-	if gamedata.player_y > 800.0f, gamedata.reset()
+    if gamedata.player_y > 800.0f, gamedata.reset()
 
-	if gamedata.portal.activated {
-		player_box AABB = gamedata.getPlayerBox()
-		if player_box.intersecting(gamedata.portal.x, gamedata.portal.y + 32.0f, 64.0f, 64.0f) {
-			resources.teleport.play()
-			gamedata.nextLevel()
-		}
-	}
+    if gamedata.portal.activated {
+        player_box AABB = gamedata.getPlayerBox()
+        if player_box.intersecting(gamedata.portal.x, gamedata.portal.y + 32.0f, 64.0f, 64.0f) {
+            resources.teleport.play()
+            gamedata.nextLevel()
+        }
+    }
 
-	if glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS {
-		unless gamedata.look_mode_lock {
-			gamedata.looking = gamedata.looking == false
-			gamedata.look_mode_lock = true
-		}
-	} else gamedata.look_mode_lock = false
+    if glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS {
+        unless gamedata.look_mode_lock {
+            gamedata.looking = gamedata.looking == false
+            gamedata.look_mode_lock = true
+        }
+    } else gamedata.look_mode_lock = false
 
-	unless gamedata.looking {
-		if gamedata.snap_cam {
-			gamedata.cam_x = 0.0f - gamedata.player_x - 64.0f + gamedata.width / 2
-			gamedata.cam_y = 0.0f - gamedata.player_y - 64.0f + gamedata.height / 2
-			gamedata.snap_cam = false
-		} else {
-			target_cam_x float = 0.0f - gamedata.player_x - 64.0f + gamedata.width / 2
-			target_cam_y float = 0.0f - gamedata.player_y - 64.0f + gamedata.height / 2
-			gamedata.cam_x = (gamedata.cam_x * 2 + target_cam_x) / 3.0f
-			gamedata.cam_y = (gamedata.cam_y * 2 + target_cam_y) / 3.0f
-		}
-	} else {
-		if glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS, gamedata.cam_y += 6.0f
-		if glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS, gamedata.cam_x += 6.0f
-		if glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS, gamedata.cam_y -= 6.0f
-		if glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS, gamedata.cam_x -= 6.0f
-	}
+    unless gamedata.looking {
+        if gamedata.snap_cam {
+            gamedata.cam_x = 0.0f - gamedata.player_x - 64.0f + gamedata.width / 2
+            gamedata.cam_y = 0.0f - gamedata.player_y - 64.0f + gamedata.height / 2
+            gamedata.snap_cam = false
+        } else {
+            target_cam_x float = 0.0f - gamedata.player_x - 64.0f + gamedata.width / 2
+            target_cam_y float = 0.0f - gamedata.player_y - 64.0f + gamedata.height / 2
+            gamedata.cam_x = (gamedata.cam_x * 2 + target_cam_x) / 3.0f
+            gamedata.cam_y = (gamedata.cam_y * 2 + target_cam_y) / 3.0f
+        }
+    } else {
+        if glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS, gamedata.cam_y += 6.0f
+        if glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS, gamedata.cam_x += 6.0f
+        if glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS, gamedata.cam_y -= 6.0f
+        if glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS, gamedata.cam_x -= 6.0f
+    }
 }
 
 func cheats(window *GLFWwindow, gamedata *GameData) void {
-	additional uint = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) * 10 + glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) * 20
-	if glfwGetKey(window, GLFW_KEY_1), gamedata.loadLevel(additional + 1)
-	if glfwGetKey(window, GLFW_KEY_2), gamedata.loadLevel(additional + 2)
-	if glfwGetKey(window, GLFW_KEY_3), gamedata.loadLevel(additional + 3)
-	if glfwGetKey(window, GLFW_KEY_4), gamedata.loadLevel(additional + 4)
-	if glfwGetKey(window, GLFW_KEY_5), gamedata.loadLevel(additional + 5)
-	if glfwGetKey(window, GLFW_KEY_6), gamedata.loadLevel(additional + 6)
-	if glfwGetKey(window, GLFW_KEY_7), gamedata.loadLevel(additional + 7)
-	if glfwGetKey(window, GLFW_KEY_8), gamedata.loadLevel(additional + 8)
-	if glfwGetKey(window, GLFW_KEY_9), gamedata.loadLevel(additional + 9)
-	if glfwGetKey(window, GLFW_KEY_0), gamedata.loadLevel(additional + 10)
+    additional uint = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) * 10 + glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) * 20
+    if glfwGetKey(window, GLFW_KEY_1), gamedata.loadLevel(additional + 1)
+    if glfwGetKey(window, GLFW_KEY_2), gamedata.loadLevel(additional + 2)
+    if glfwGetKey(window, GLFW_KEY_3), gamedata.loadLevel(additional + 3)
+    if glfwGetKey(window, GLFW_KEY_4), gamedata.loadLevel(additional + 4)
+    if glfwGetKey(window, GLFW_KEY_5), gamedata.loadLevel(additional + 5)
+    if glfwGetKey(window, GLFW_KEY_6), gamedata.loadLevel(additional + 6)
+    if glfwGetKey(window, GLFW_KEY_7), gamedata.loadLevel(additional + 7)
+    if glfwGetKey(window, GLFW_KEY_8), gamedata.loadLevel(additional + 8)
+    if glfwGetKey(window, GLFW_KEY_9), gamedata.loadLevel(additional + 9)
+    if glfwGetKey(window, GLFW_KEY_0), gamedata.loadLevel(additional + 10)
 }

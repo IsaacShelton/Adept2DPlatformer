@@ -7,75 +7,75 @@ import 'gamedata.adept'
 import 'resources.adept'
 
 func render(resources *Resources, gamedata *GameData) void {
-	resources.shader.use()
-	gamedata.projection.translate(gamedata.cam_x, gamedata.cam_y, 0.0f)
-	resources.shader.uploadMatrix4f(gamedata.projection_location, gamedata.projection)
+    resources.shader.use()
+    gamedata.projection.translate(gamedata.cam_x, gamedata.cam_y, 0.0f)
+    resources.shader.uploadMatrix4f(gamedata.projection_location, gamedata.projection)
 
-	gamedata.transformation.identity()
-	gamedata.transformation.translate(gamedata.player_x, gamedata.player_y, 0.0f)
-	resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
-	bindTexture(gamedata.player_anim.now())
-	resources.model_128x128.draw()
+    gamedata.transformation.identity()
+    gamedata.transformation.translate(gamedata.player_x, gamedata.player_y, 0.0f)
+    resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
+    bindTexture(gamedata.player_anim.now())
+    resources.model_128x128.draw()
 
-	platform_index usize = 0; while platform_index != gamedata.platforms_length {
-		platform *Platform = &gamedata.platforms[platform_index]
-		if platform.type != PLATFORM_TYPE_HIDDEN or (platform.type == PLATFORM_TYPE_HIDDEN and platform.triggered) {
-			gamedata.transformation.identity()
-			gamedata.transformation.translate(platform.box.x, platform.box.y, 0.0f)
-			resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
-			bindTexture(platform.texture)
-			resources.model_128x16.draw()
-		}
-		platform_index += 1ui
-	}
+    platform_index usize = 0; while platform_index != gamedata.platforms_length {
+        platform *Platform = &gamedata.platforms[platform_index]
+        if platform.type != PLATFORM_TYPE_HIDDEN or (platform.type == PLATFORM_TYPE_HIDDEN and platform.triggered) {
+            gamedata.transformation.identity()
+            gamedata.transformation.translate(platform.box.x, platform.box.y, 0.0f)
+            resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
+            bindTexture(platform.texture)
+            resources.model_128x16.draw()
+        }
+        platform_index += 1ui
+    }
 
-	box_index usize = 0; while box_index != gamedata.boxes_length {
-		box *Box = &gamedata.boxes[box_index]
-		unless box.gone {
-			gamedata.transformation.identity()
-			gamedata.transformation.translate(box.box.x, box.box.y, 0.0f)
-			resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
-			bindTexture(*box.texture)
-			resources.model_64x64.draw()
-		}
-		box_index += 1ui
-	}
+    box_index usize = 0; while box_index != gamedata.boxes_length {
+        box *Box = &gamedata.boxes[box_index]
+        unless box.gone {
+            gamedata.transformation.identity()
+            gamedata.transformation.translate(box.box.x, box.box.y, 0.0f)
+            resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
+            bindTexture(*box.texture)
+            resources.model_64x64.draw()
+        }
+        box_index += 1ui
+    }
 
-	jumper_index usize = 0; while jumper_index != gamedata.jumpers_length {
-		jumper *Jumper = &gamedata.jumpers[jumper_index]
-		unless jumper.gone {
-			gamedata.transformation.identity()
-			gamedata.transformation.translate(jumper.box.x, jumper.box.y, 0.0f)
-			resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
-			if jumper.jumping, bindTexture(*jumper.texture)
-			else bindTexture(gamedata.box_texture)
+    jumper_index usize = 0; while jumper_index != gamedata.jumpers_length {
+        jumper *Jumper = &gamedata.jumpers[jumper_index]
+        unless jumper.gone {
+            gamedata.transformation.identity()
+            gamedata.transformation.translate(jumper.box.x, jumper.box.y, 0.0f)
+            resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
+            if jumper.jumping, bindTexture(*jumper.texture)
+            else bindTexture(gamedata.box_texture)
 
-			if jumper.jump_direction <= 0.0f, resources.model_64x64.draw()
-			else resources.model_64x64_r.draw()
-		}
-		jumper_index += 1ui
-	}
+            if jumper.jump_direction <= 0.0f, resources.model_64x64.draw()
+            else resources.model_64x64_r.draw()
+        }
+        jumper_index += 1ui
+    }
 
-	if gamedata.portal.activated {
-		gamedata.transformation.identity()
-		gamedata.transformation.translate(gamedata.portal.x, gamedata.portal.y, 0.0f)
-		resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
-		bindTexture(gamedata.portal_texture)
-		resources.model_64x128.draw()
-	}
+    if gamedata.portal.activated {
+        gamedata.transformation.identity()
+        gamedata.transformation.translate(gamedata.portal.x, gamedata.portal.y, 0.0f)
+        resources.shader.uploadMatrix4f(gamedata.transformation_location, gamedata.transformation)
+        bindTexture(gamedata.portal_texture)
+        resources.model_64x128.draw()
+    }
 
-	// Update animations
-	gamedata.player_anim.update()
+    // Update animations
+    gamedata.player_anim.update()
 
-	if gamedata.player_anim == gamedata.player_punch_r_anim {
-		if gamedata.player_anim.current_frame == 0ui and gamedata.player_anim.ticker == 0ui {
-			gamedata.player_anim = gamedata.player_idle_r_anim
-			gamedata.player_anim.reset()
-		}
-	} else if gamedata.player_anim == gamedata.player_punch_l_anim {
-		if gamedata.player_anim.current_frame == 0ui and gamedata.player_anim.ticker == 0ui {
-			gamedata.player_anim = gamedata.player_idle_l_anim
-			gamedata.player_anim.reset()
-		}
-	}
+    if gamedata.player_anim == gamedata.player_punch_r_anim {
+        if gamedata.player_anim.current_frame == 0ui and gamedata.player_anim.ticker == 0ui {
+            gamedata.player_anim = gamedata.player_idle_r_anim
+            gamedata.player_anim.reset()
+        }
+    } else if gamedata.player_anim == gamedata.player_punch_l_anim {
+        if gamedata.player_anim.current_frame == 0ui and gamedata.player_anim.ticker == 0ui {
+            gamedata.player_anim = gamedata.player_idle_l_anim
+            gamedata.player_anim.reset()
+        }
+    }
 }

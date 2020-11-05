@@ -3,7 +3,7 @@
 // Module for driving all the other parts of the game
 // ----------------------------------------------------------------------
 
-pragma compiler_version '2.0'
+pragma compiler_version '2.1'
 pragma project_name 'Adept2DPlatformer'
 
 import 'glfw/glfw.adept'
@@ -21,10 +21,17 @@ import 'render.adept'
 func main() int {
     unless glfwInit(), puts('Failed to init glfw'); return 1
 
+    #if __macos__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    #end
+
     monitor *GLFWmonitor = glfwGetPrimaryMonitor()
     video_mode *GLFWvidmode = glfwGetVideoMode(monitor)
     window *GLFWwindow = glfwCreateWindow(video_mode.width, video_mode.height, 'Purple Void', monitor, null)
-
+    
     if window == null {
         puts('Failed to create window')
         glfwTerminate()
@@ -46,8 +53,20 @@ func main() int {
 
     resources.load(); gamedata.load(&resources)
     resources.music.play()
+    
+    #if __macos__
+    current_time double = 0.0
+    previous_time double = glfwGetTime()
+    #end
 
     until glfwWindowShouldClose(window) {
+        #if __macos__
+        current_time = glfwGetTime()
+        if current_time - previous_time < 1.0 / 60.0,
+            continue
+        previous_time += 1.0 / 60.0
+        #end
+        
         if gamedata.scene == SCENE_START_MENU {
             glClearColor(0.8f, 0.0f, 0.8f, 0.0f)
             glClear(GL_COLOR_BUFFER_BIT)

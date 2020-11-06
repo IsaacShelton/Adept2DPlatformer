@@ -20,12 +20,6 @@ After that, you can optionally use a tool like `iexpress` to create a self-extra
 ### Map Maker
 - The map maker is written in python using pygame
 
-
-### How to compile
-Make sure your compiler supports version `2.2`
-
-Navigate to the root of the project and run `adept`
-
 # Screenshots
 ![](https://raw.githubusercontent.com/IsaacShelton/Adept2DPlatformer/master/.github/ss1.png)
 ![](https://raw.githubusercontent.com/IsaacShelton/Adept2DPlatformer/master/.github/ss2.png)
